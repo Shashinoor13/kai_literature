@@ -202,7 +202,7 @@ class _PostsTab extends StatelessWidget {
               itemCount: postState.posts.length,
               itemBuilder: (context, index) {
                 final post = postState.posts[index];
-                return _PostListItem(post: post);
+                return _PostListItem(post: post, isOwnPost: true);
               },
             );
           }
@@ -534,107 +534,55 @@ class _ProfileHeader extends StatelessWidget {
 }
 
 /// Post List Item Widget
-class _PostListItem extends StatelessWidget {
+class _PostListItem extends StatefulWidget {
   final PostModel post;
+  final bool isOwnPost;
 
-  const _PostListItem({required this.post});
+  const _PostListItem({
+    required this.post,
+    this.isOwnPost = false,
+  });
 
-  String _getCategoryIcon(String category) {
+  @override
+  State<_PostListItem> createState() => _PostListItemState();
+}
+
+class _PostListItemState extends State<_PostListItem> {
+  Color _getCategoryColor(String category) {
     switch (category.toLowerCase()) {
       case 'poem':
-        return '📝';
-      case 'story':
-        return '📖';
+        return const Color(0xFF90EE90);
       case 'joke':
-        return '😄';
+        return const Color(0xFFFFD700);
+      case 'story':
+        return const Color(0xFFADD8E6);
       default:
-        return '📄';
+        return Colors.grey[300]!;
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSizes.md),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header: Category and Date
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      _getCategoryIcon(post.category),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(width: AppSizes.xs),
-                    Text(
-                      post.category.toUpperCase(),
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  _formatDate(post.createdAt),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.sm),
+  Color _getCategoryTextColor(String category) {
+    switch (category.toLowerCase()) {
+      case 'poem':
+      case 'joke':
+      case 'story':
+        return Colors.black87;
+      default:
+        return Colors.white;
+    }
+  }
 
-            // Title
-            if (post.title.isNotEmpty) ...[
-              Text(
-                post.title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: AppSizes.xs),
-            ],
-
-            // Content Preview
-            Text(
-              post.content,
-              style: Theme.of(context).textTheme.bodyMedium,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: AppSizes.sm),
-
-            // Interaction Stats
-            Row(
-              children: [
-                _InteractionStat(
-                  icon: Icons.favorite_outline,
-                  count: post.likesCount,
-                ),
-                const SizedBox(width: AppSizes.md),
-                _InteractionStat(
-                  icon: Icons.comment_outlined,
-                  count: post.commentsCount,
-                ),
-                const SizedBox(width: AppSizes.md),
-                _InteractionStat(
-                  icon: Icons.share_outlined,
-                  count: post.sharesCount,
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
+  HeroIcons _getCategoryIcon(String category) {
+    switch (category.toLowerCase()) {
+      case 'poem':
+        return HeroIcons.bookOpen;
+      case 'story':
+        return HeroIcons.documentText;
+      case 'joke':
+        return HeroIcons.faceSmile;
+      default:
+        return HeroIcons.document;
+    }
   }
 
   String _formatDate(DateTime date) {
@@ -653,11 +601,226 @@ class _PostListItem extends StatelessWidget {
       return 'Just now';
     }
   }
+
+  void _showOptionsMenu() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(AppSizes.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const HeroIcon(HeroIcons.pencil),
+              title: const Text('Edit Post'),
+              onTap: () {
+                Navigator.pop(context);
+                _editPost();
+              },
+            ),
+            ListTile(
+              leading: const HeroIcon(
+                HeroIcons.trash,
+                color: Colors.red,
+              ),
+              title: const Text(
+                'Delete Post',
+                style: TextStyle(color: Colors.red),
+              ),
+              onTap: () {
+                Navigator.pop(context);
+                _deletePost();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _editPost() {
+    context.push('/create', extra: widget.post);
+  }
+
+  Future<void> _deletePost() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Post'),
+        content: const Text('Are you sure you want to delete this post?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      try {
+        await context.read<PostRepository>().deletePost(widget.post.id);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Post deleted successfully')),
+          );
+          // Reload posts
+          final authState = context.read<AuthBloc>().state;
+          if (authState is Authenticated) {
+            context.read<PostBloc>().add(LoadUserPosts(authState.user.id));
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error deleting post: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.push('/post/${widget.post.id}'),
+      child: Card(
+        margin: const EdgeInsets.only(bottom: AppSizes.md),
+        elevation: 1,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header: Category badge, date, and options
+              Row(
+                children: [
+                  // Category badge with icon
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSizes.sm,
+                      vertical: AppSizes.xs,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getCategoryColor(widget.post.category),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        HeroIcon(
+                          _getCategoryIcon(widget.post.category),
+                          size: 14,
+                          color: _getCategoryTextColor(widget.post.category),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.post.category.toUpperCase(),
+                          style: TextStyle(
+                            color: _getCategoryTextColor(widget.post.category),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    _formatDate(widget.post.createdAt),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  if (widget.isOwnPost) ...[
+                    const SizedBox(width: AppSizes.xs),
+                    IconButton(
+                      icon: const HeroIcon(
+                        HeroIcons.ellipsisVertical,
+                        size: 20,
+                      ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      onPressed: _showOptionsMenu,
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: AppSizes.md),
+
+              // Title
+              if (widget.post.title.isNotEmpty) ...[
+                Text(
+                  widget.post.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: AppSizes.xs),
+              ],
+
+              // Content Preview
+              Text(
+                widget.post.content,
+                style: TextStyle(
+                  fontSize: 15,
+                  height: 1.5,
+                  color: Colors.grey[800],
+                ),
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppSizes.md),
+
+              // Divider
+              Divider(
+                height: 1,
+                color: Colors.grey[300],
+              ),
+              const SizedBox(height: AppSizes.sm),
+
+              // Interaction Stats
+              Row(
+                children: [
+                  _InteractionStat(
+                    icon: HeroIcons.heart,
+                    count: widget.post.likesCount,
+                  ),
+                  const SizedBox(width: AppSizes.lg),
+                  _InteractionStat(
+                    icon: HeroIcons.chatBubbleLeft,
+                    count: widget.post.commentsCount,
+                  ),
+                  const SizedBox(width: AppSizes.lg),
+                  _InteractionStat(
+                    icon: HeroIcons.share,
+                    count: widget.post.sharesCount,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 /// Interaction Stat Widget
 class _InteractionStat extends StatelessWidget {
-  final IconData icon;
+  final HeroIcons icon;
   final int count;
 
   const _InteractionStat({required this.icon, required this.count});
@@ -666,11 +829,20 @@ class _InteractionStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey),
+        HeroIcon(
+          icon,
+          style: HeroIconStyle.outline,
+          size: 18,
+          color: Colors.grey[600],
+        ),
         const SizedBox(width: 4),
         Text(
           '$count',
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[700],
+          ),
         ),
       ],
     );

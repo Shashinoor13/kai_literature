@@ -237,17 +237,140 @@ class PostRepository {
     }
   }
 
-  /// Get feed posts
+  /// Get a single post by ID
+  Future<PostModel?> getPostById(String postId) async {
+    try {
+      final doc = await _firestore.collection('posts').doc(postId).get();
+      if (doc.exists) {
+        return PostModel.fromFirestore(doc);
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Failed to get post: $e');
+    }
+  }
+
+  /// Delete a post
+  Future<void> deletePost(String postId) async {
+    try {
+      await _firestore.collection('posts').doc(postId).delete();
+    } catch (e) {
+      throw Exception('Failed to delete post: $e');
+    }
+  }
+
+  /// Update a post
+  Future<void> updatePost({
+    required String postId,
+    required String title,
+    required String content,
+    required String category,
+  }) async {
+    try {
+      await _firestore.collection('posts').doc(postId).update({
+        'title': title,
+        'content': content,
+        'category': category,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Failed to update post: $e');
+    }
+  }
+
+  /// Get feed posts (all posts - recommended)
   Stream<List<PostModel>> getFeedPosts() {
     return _firestore
         .collection('posts')
         .orderBy('createdAt', descending: true)
-        .limit(20)
+        .limit(50)
         .snapshots()
         .map(
           (snapshot) =>
               snapshot.docs.map((doc) => PostModel.fromFirestore(doc)).toList(),
         );
+  }
+
+  /// Get posts from users the current user follows
+  Stream<List<PostModel>> getFollowingFeedPosts(String currentUserId) async* {
+    // Get list of users that current user follows
+    final followsSnapshot = await _firestore
+        .collection('follows')
+        .where('followerId', isEqualTo: currentUserId)
+        .get();
+
+    final followingIds = followsSnapshot.docs
+        .map((doc) => doc.data()['followingId'] as String)
+        .toSet();
+
+    if (followingIds.isEmpty) {
+      yield [];
+      return;
+    }
+
+    // Stream posts from followed users
+    await for (final snapshot in _firestore
+        .collection('posts')
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()) {
+      final posts = snapshot.docs
+          .map((doc) => PostModel.fromFirestore(doc))
+          .where((post) => followingIds.contains(post.authorId))
+          .toList();
+
+      yield posts;
+    }
+  }
+
+  /// Get posts by category
+  Stream<List<PostModel>> getPostsByCategory(String category) {
+    return _firestore
+        .collection('posts')
+        .where('category', isEqualTo: category)
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => PostModel.fromFirestore(doc)).toList(),
+        );
+  }
+
+  /// Get posts from following users filtered by category
+  Stream<List<PostModel>> getFollowingPostsByCategory(
+    String currentUserId,
+    String category,
+  ) async* {
+    // Get list of users that current user follows
+    final followsSnapshot = await _firestore
+        .collection('follows')
+        .where('followerId', isEqualTo: currentUserId)
+        .get();
+
+    final followingIds = followsSnapshot.docs
+        .map((doc) => doc.data()['followingId'] as String)
+        .toSet();
+
+    if (followingIds.isEmpty) {
+      yield [];
+      return;
+    }
+
+    // Stream posts from followed users filtered by category
+    await for (final snapshot in _firestore
+        .collection('posts')
+        .where('category', isEqualTo: category)
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()) {
+      final posts = snapshot.docs
+          .map((doc) => PostModel.fromFirestore(doc))
+          .where((post) => followingIds.contains(post.authorId))
+          .toList();
+
+      yield posts;
+    }
   }
 
   /// Get user's posts

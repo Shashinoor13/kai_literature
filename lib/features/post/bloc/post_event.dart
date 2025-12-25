@@ -81,3 +81,21 @@ class LoadUserPosts extends PostEvent {
   @override
   List<Object?> get props => [userId];
 }
+
+/// Update an existing post
+class UpdatePostRequested extends PostEvent {
+  final String postId;
+  final String title;
+  final String content;
+  final String category;
+
+  const UpdatePostRequested({
+    required this.postId,
+    required this.title,
+    required this.content,
+    required this.category,
+  });
+
+  @override
+  List<Object?> get props => [postId, title, content, category];
+}

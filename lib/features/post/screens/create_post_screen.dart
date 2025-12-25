@@ -10,10 +10,13 @@ import 'package:literature/features/post/bloc/post_state.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
 import 'package:literature/core/constants/sizes.dart';
+import 'package:literature/models/post_model.dart';
 
 /// Beautiful text-heavy create post screen
 class CreatePostScreen extends StatefulWidget {
-  const CreatePostScreen({super.key});
+  final PostModel? postToEdit;
+
+  const CreatePostScreen({super.key, this.postToEdit});
 
   @override
   State<CreatePostScreen> createState() => _CreatePostScreenState();
@@ -27,6 +30,19 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   final _imagePicker = ImagePicker();
 
   final List<String> _categories = ['poem', 'story', 'joke', 'other'];
+
+  bool get _isEditing => widget.postToEdit != null;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill form if editing
+    if (_isEditing) {
+      _titleController.text = widget.postToEdit!.title;
+      _contentController.text = widget.postToEdit!.content;
+      _selectedCategory = widget.postToEdit!.category;
+    }
+  }
 
   @override
   void dispose() {
@@ -78,6 +94,15 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               ),
             );
             context.go('/');
+          } else if (state is PostUpdated) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Post updated successfully'),
+                backgroundColor: Colors.green,
+                duration: Duration(seconds: 2),
+              ),
+            );
+            context.pop();
           } else if (state is DraftSaved) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -115,7 +140,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             },
             child: Scaffold(
               appBar: AppBar(
-                title: const Text('Create'),
+                title: Text(_isEditing ? 'Edit Post' : 'Create'),
                 actions: [
                   if (_backgroundImage != null)
                     IconButton(
@@ -250,75 +275,91 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Post button
+                      // Post/Update button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: _hasContent && !isLoading
                               ? () {
-                                  context.read<PostBloc>().add(
-                                    CreatePostRequested(
-                                      title: _titleController.text.trim(),
-                                      content: _contentController.text.trim(),
-                                      category: _selectedCategory,
-                                      backgroundImage: _backgroundImage,
-                                    ),
-                                  );
+                                  if (_isEditing) {
+                                    // Update existing post
+                                    context.read<PostBloc>().add(
+                                      UpdatePostRequested(
+                                        postId: widget.postToEdit!.id,
+                                        title: _titleController.text.trim(),
+                                        content: _contentController.text.trim(),
+                                        category: _selectedCategory,
+                                      ),
+                                    );
+                                  } else {
+                                    // Create new post
+                                    context.read<PostBloc>().add(
+                                      CreatePostRequested(
+                                        title: _titleController.text.trim(),
+                                        content: _contentController.text.trim(),
+                                        category: _selectedCategory,
+                                        backgroundImage: _backgroundImage,
+                                      ),
+                                    );
+                                  }
                                 }
                               : null,
-                          child: const Text('Post'),
+                          child: Text(_isEditing ? 'Update Post' : 'Post'),
                         ),
                       ),
 
-                      const SizedBox(height: AppSizes.sm),
+                      // Only show secondary actions when creating (not editing)
+                      if (!_isEditing) ...[
+                        const SizedBox(height: AppSizes.sm),
 
-                      // Secondary actions row
-                      Row(
-                        children: [
-                          // Save as Draft
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _hasContent && !isLoading
-                                  ? () {
-                                      context.read<PostBloc>().add(
-                                        SaveDraftRequested(
-                                          title: _titleController.text.trim(),
-                                          content: _contentController.text
-                                              .trim(),
-                                          category: _selectedCategory,
-                                          backgroundImage: _backgroundImage,
-                                        ),
-                                      );
-                                    }
-                                  : null,
-                              child: const Text('Save Draft'),
+                        // Secondary actions row
+                        Row(
+                          children: [
+                            // Save as Draft
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _hasContent && !isLoading
+                                    ? () {
+                                        context.read<PostBloc>().add(
+                                          SaveDraftRequested(
+                                            title: _titleController.text.trim(),
+                                            content: _contentController.text
+                                                .trim(),
+                                            category: _selectedCategory,
+                                            backgroundImage: _backgroundImage,
+                                          ),
+                                        );
+                                      }
+                                    : null,
+                                child: const Text('Save Draft'),
+                              ),
                             ),
-                          ),
 
-                          const SizedBox(width: AppSizes.sm),
+                            const SizedBox(width: AppSizes.sm),
 
-                          // Upload as Story
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: _hasContent && !isLoading
-                                  ? () {
-                                      context.read<PostBloc>().add(
-                                        UploadStoryRequested(
-                                          title: _titleController.text.trim(),
-                                          content: _contentController.text
-                                              .trim(),
-                                          category: _selectedCategory,
-                                          backgroundImage: _backgroundImage,
-                                          backgroundColor: 'black',
-                                        ),
-                                      );
-                                    }
-                                  : null,
-                              child: const Text('Story (7d)'),
+                            // Upload as Story
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: _hasContent && !isLoading
+                                    ? () {
+                                        context.read<PostBloc>().add(
+                                          UploadStoryRequested(
+                                            title: _titleController.text.trim(),
+                                            content: _contentController.text
+                                                .trim(),
+                                            category: _selectedCategory,
+                                            backgroundImage: _backgroundImage,
+                                            backgroundColor: 'black',
+                                          ),
+                                        );
+                                      }
+                                    : null,
+                                child: const Text('Story (7d)'),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),

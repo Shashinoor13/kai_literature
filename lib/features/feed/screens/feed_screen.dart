@@ -15,6 +15,35 @@ import 'package:literature/models/post_model.dart';
 import 'package:literature/models/story_model.dart';
 import 'package:literature/models/user_model.dart';
 import 'package:literature/features/feed/screens/comment_screen.dart';
+import 'package:literature/core/routing/scaffold_with_nav_bar.dart';
+
+/// Extension to get display name for FeedType
+extension FeedTypeExtension on FeedType {
+  String get displayName {
+    switch (this) {
+      case FeedType.following:
+        return 'Following';
+      case FeedType.recommended:
+        return 'Recommended';
+    }
+  }
+}
+
+/// Extension to get display name for ContentFilter
+extension ContentFilterExtension on ContentFilter {
+  String get displayName {
+    switch (this) {
+      case ContentFilter.all:
+        return 'All';
+      case ContentFilter.poem:
+        return 'Poems';
+      case ContentFilter.story:
+        return 'Stories';
+      case ContentFilter.joke:
+        return 'Jokes';
+    }
+  }
+}
 
 /// Home Feed Screen - TikTok-style vertical scrolling feed
 /// See CLAUDE.md: Navigation Structure > Bottom Navigation Bar > Home (Feed)
@@ -80,110 +109,142 @@ class _FeedScreenState extends State<FeedScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _feedBloc,
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          scrolledUnderElevation: 0,
-          title: GestureDetector(
-            onTap: () => context.push('/search'),
-            child: const SearchBarWidget(
-              hintText: 'Search posts, users...',
-              enabled: false,
+    return NotificationListener<FeedRefreshNotification>(
+      onNotification: (notification) {
+        // Double-tap on home button detected - refresh feed
+        _feedBloc.add(
+          RefreshFeedPosts(
+            feedType: _feedBloc.currentFeedType,
+            contentFilter: _feedBloc.currentContentFilter,
+          ),
+        );
+        return true;
+      },
+      child: BlocProvider.value(
+        value: _feedBloc,
+        child: Scaffold(
+          extendBodyBehindAppBar: true,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            title: GestureDetector(
+              onTap: () => context.push('/search'),
+              child: const SearchBarWidget(
+                hintText: 'Search posts, users...',
+                enabled: false,
+              ),
             ),
           ),
-        ),
-        body: Stack(
-          children: [
-            // Main Feed Content
-            BlocBuilder<FeedBloc, FeedState>(
-              builder: (context, state) {
-                if (state is FeedLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+          body: Stack(
+            children: [
+              // Main Feed Content
+              BlocBuilder<FeedBloc, FeedState>(
+                builder: (context, state) {
+                  if (state is FeedLoading) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                if (state is FeedError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const HeroIcon(
-                          HeroIcons.exclamationTriangle,
-                          size: 64,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(height: AppSizes.md),
-                        Text(
-                          'Error loading feed',
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: AppSizes.md),
-                        Text(state.message),
-                        const SizedBox(height: AppSizes.lg),
-                        ElevatedButton(
-                          onPressed: () =>
-                              _feedBloc.add(const RefreshFeedPosts()),
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                if (state is FeedLoaded) {
-                  if (state.posts.isEmpty) {
+                  if (state is FeedError) {
                     return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const HeroIcon(
-                            HeroIcons.documentText,
+                            HeroIcons.exclamationTriangle,
                             size: 64,
                             color: Colors.grey,
                           ),
                           const SizedBox(height: AppSizes.md),
                           Text(
-                            'No posts yet',
+                            'Error loading feed',
                             style: Theme.of(context).textTheme.headlineMedium,
                           ),
-                          const SizedBox(height: AppSizes.sm),
-                          const Text(
-                            'Be the first to share something!',
-                            style: TextStyle(color: Colors.grey),
+                          const SizedBox(height: AppSizes.md),
+                          Text(state.message),
+                          const SizedBox(height: AppSizes.lg),
+                          ElevatedButton(
+                            onPressed: () {
+                              print(state.message);
+                              _feedBloc.add(const RefreshFeedPosts());
+                            },
+                            child: const Text('Retry'),
                           ),
                         ],
                       ),
                     );
                   }
 
-                  return PageView.builder(
-                    controller: _pageController,
-                    scrollDirection: Axis.vertical,
-                    itemCount: state.posts.length,
-                    itemBuilder: (context, index) {
-                      final post = state.posts[index];
-                      return _FullScreenPostCard(post: post);
-                    },
-                  );
-                }
+                  if (state is FeedLoaded) {
+                    if (state.posts.isEmpty) {
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: AppSizes.xxl),
+                            const HeroIcon(
+                              HeroIcons.documentText,
+                              size: 64,
+                              color: Colors.grey,
+                            ),
+                            const SizedBox(height: AppSizes.md),
+                            Text(
+                              'No posts yet',
+                              style: Theme.of(context).textTheme.headlineMedium,
+                            ),
+                            const SizedBox(height: AppSizes.sm),
+                            const Text(
+                              'Be the first to share something!',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
 
-                return const SizedBox.shrink();
-              },
-            ),
+                    return RefreshIndicator(
+                      onRefresh: () async {
+                        _feedBloc.add(
+                          RefreshFeedPosts(
+                            feedType: _feedBloc.currentFeedType,
+                            contentFilter: _feedBloc.currentContentFilter,
+                          ),
+                        );
+                        await Future.delayed(const Duration(milliseconds: 500));
+                      },
+                      child: PageView.builder(
+                        controller: _pageController,
+                        scrollDirection: Axis.vertical,
+                        itemCount: state.posts.length,
+                        itemBuilder: (context, index) {
+                          final post = state.posts[index];
+                          return _FullScreenPostCard(post: post);
+                        },
+                      ),
+                    );
+                  }
 
-            // Story Bar - Positioned at top, shows/hides on scroll
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              top: _showStoryBar ? 120 : -120,
-              left: 0,
-              right: 0,
-              child: const _StoryBar(),
-            ),
-          ],
+                  return const SizedBox.shrink();
+                },
+              ),
+
+              // Story Bar - Positioned at top, shows/hides on scroll
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                top: _showStoryBar ? 120 : -300,
+                left: 0,
+                right: 0,
+                child: Column(
+                  children: [
+                    const _StoryBar(),
+                    const SizedBox(height: AppSizes.xs),
+                    _FilterChips(feedBloc: _feedBloc),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -783,12 +844,22 @@ class _StoryBar extends StatelessWidget {
               final authorId = allAuthorIds[authorIndex];
               final authorStories = storiesByAuthor[authorId]!;
 
-              return _StoryAvatar(
-                authorId: authorId,
-                storyCount: authorStories.length,
-                hasUnseen: true, // TODO: Track viewed stories
-                allAuthorIds: allAuthorIds,
-                authorIndex: authorIndex,
+              // Fetch the author's username asynchronously
+              return FutureBuilder<UserModel>(
+                future: context.read<AuthRepository>().getUserData(authorId),
+                builder: (context, snapshot) {
+                  final authorName = snapshot.hasData
+                      ? snapshot.data!.username
+                      : '';
+                  return _StoryAvatar(
+                    authorId: authorId,
+                    storyCount: authorStories.length,
+                    hasUnseen: true, // TODO: Track viewed stories
+                    allAuthorIds: allAuthorIds,
+                    authorIndex: authorIndex,
+                    authorName: authorName,
+                  );
+                },
               );
             },
           ),
@@ -885,6 +956,7 @@ class _StoryAvatar extends StatelessWidget {
   final bool hasUnseen;
   final List<String> allAuthorIds;
   final int authorIndex;
+  final String authorName;
 
   const _StoryAvatar({
     required this.authorId,
@@ -892,6 +964,7 @@ class _StoryAvatar extends StatelessWidget {
     required this.hasUnseen,
     required this.allAuthorIds,
     required this.authorIndex,
+    required this.authorName,
   });
 
   @override
@@ -942,11 +1015,213 @@ class _StoryAvatar extends StatelessWidget {
             ),
             const SizedBox(height: AppSizes.xs),
             Text(
-              storyCount > 0 ? '$storyCount' : '',
+              storyCount > 0 ? '$authorName' : '',
               style: const TextStyle(
                 fontSize: 10,
                 color: Colors.white70,
                 fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Hierarchical filter chips for feed filtering
+class _FilterChips extends StatefulWidget {
+  final FeedBloc feedBloc;
+
+  const _FilterChips({required this.feedBloc});
+
+  @override
+  State<_FilterChips> createState() => _FilterChipsState();
+}
+
+class _FilterChipsState extends State<_FilterChips> {
+  late FeedType _selectedFeedType;
+  late ContentFilter _selectedContentFilter;
+  late Stream<FeedState> _blocStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedFeedType = widget.feedBloc.currentFeedType;
+    _selectedContentFilter = widget.feedBloc.currentContentFilter;
+    _blocStream = widget.feedBloc.stream;
+    _blocStream.listen((state) {
+      if (mounted) {
+        setState(() {
+          _selectedFeedType = widget.feedBloc.currentFeedType;
+          _selectedContentFilter = widget.feedBloc.currentContentFilter;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.transparent, Colors.black.withOpacity(0.3)],
+        ),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Top level filter: Following / Recommended
+          SizedBox(
+            height: 40,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _buildFeedTypeChip(context, FeedType.following),
+                const SizedBox(width: AppSizes.xs),
+                _buildFeedTypeChip(context, FeedType.recommended),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSizes.md),
+
+          // Second level filter: All / Poems / Stories / Jokes
+          SizedBox(
+            height: 36,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                _buildContentFilterChip(context, ContentFilter.all),
+                const SizedBox(width: AppSizes.xs),
+                _buildContentFilterChip(context, ContentFilter.poem),
+                const SizedBox(width: AppSizes.xs),
+                _buildContentFilterChip(context, ContentFilter.story),
+                const SizedBox(width: AppSizes.xs),
+                _buildContentFilterChip(context, ContentFilter.joke),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeedTypeChip(BuildContext context, FeedType feedType) {
+    final isSelected = _selectedFeedType == feedType;
+
+    return GestureDetector(
+      onTap: () {
+        if (_selectedFeedType != feedType) {
+          widget.feedBloc.add(ChangeFeedType(feedType));
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.lg,
+          vertical: AppSizes.xs,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          // border: Border.all(
+          //   color: isSelected ? Colors.white : Colors.white24,
+          //   width: 1,
+          // ),
+        ),
+        child: Center(
+          child: Text(
+            feedType.displayName,
+            style: TextStyle(
+              color: isSelected ? Colors.black : Colors.white,
+              fontSize: 15,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContentFilterChip(BuildContext context, ContentFilter filter) {
+    final isSelected = _selectedContentFilter == filter;
+
+    // Heroicons and color for each filter type
+    Widget iconWidget;
+    Color chipColor;
+    switch (filter) {
+      case ContentFilter.all:
+        iconWidget = HeroIcon(
+          HeroIcons.squares2x2,
+          style: HeroIconStyle.outline,
+          size: 18,
+          color: isSelected ? Colors.black : Colors.white,
+        );
+        chipColor = isSelected ? Colors.white : Colors.white12;
+        break;
+      case ContentFilter.poem:
+        // Use a book icon from simple_icons if available, else fallback to HeroIcon.bookOpen
+        iconWidget = HeroIcon(
+          HeroIcons.bookOpen,
+          style: HeroIconStyle.outline,
+          size: 18,
+          color: isSelected ? Colors.black : const Color(0xFF90EE90),
+        );
+        chipColor = isSelected ? const Color(0xFF90EE90) : Colors.white12;
+        break;
+      case ContentFilter.story:
+        // Use a document icon for stories
+        iconWidget = HeroIcon(
+          HeroIcons.documentText,
+          style: HeroIconStyle.outline,
+          size: 18,
+          color: isSelected ? Colors.black : const Color(0xFFADD8E6),
+        );
+        chipColor = isSelected ? const Color(0xFFADD8E6) : Colors.white12;
+        break;
+      case ContentFilter.joke:
+        iconWidget = HeroIcon(
+          HeroIcons.faceSmile,
+          style: HeroIconStyle.outline,
+          size: 18,
+          color: isSelected ? Colors.black : const Color(0xFFFFD700),
+        );
+        chipColor = isSelected ? const Color(0xFFFFD700) : Colors.white12;
+        break;
+    }
+
+    return GestureDetector(
+      onTap: () {
+        if (_selectedContentFilter != filter) {
+          widget.feedBloc.add(ChangeContentFilter(filter));
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSizes.md,
+          vertical: AppSizes.xs - 2,
+        ),
+        decoration: BoxDecoration(
+          color: chipColor,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isSelected ? Colors.white : Colors.white24,
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            iconWidget,
+            const SizedBox(width: 6),
+            Text(
+              filter.displayName,
+              style: TextStyle(
+                color: isSelected ? Colors.black : Colors.white,
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ],

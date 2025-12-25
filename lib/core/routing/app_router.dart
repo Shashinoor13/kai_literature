@@ -16,8 +16,10 @@ import 'package:literature/features/profile/screens/blocked_users_screen.dart';
 import 'package:literature/features/messaging/screens/chat_list_screen.dart';
 import 'package:literature/features/messaging/screens/chat_screen.dart';
 import 'package:literature/features/post/screens/create_post_screen.dart';
+import 'package:literature/features/post/screens/post_detail_screen.dart';
 import 'package:literature/features/feed/screens/story_viewer_screen.dart';
 import 'package:literature/core/routing/scaffold_with_nav_bar.dart';
+import 'package:literature/models/post_model.dart';
 
 /// App router configuration using go_router with navigation shell
 /// See CLAUDE.md: Navigation Structure
@@ -90,7 +92,10 @@ class AppRouter {
             routes: [
               GoRoute(
                 path: '/create',
-                builder: (context, state) => const CreatePostScreen(),
+                builder: (context, state) {
+                  final postToEdit = state.extra as PostModel?;
+                  return CreatePostScreen(postToEdit: postToEdit);
+                },
               ),
             ],
           ),
@@ -161,6 +166,15 @@ class AppRouter {
       GoRoute(
         path: '/blocked-users',
         builder: (context, state) => const BlockedUsersScreen(),
+      ),
+
+      // Post Detail route
+      GoRoute(
+        path: '/post/:postId',
+        builder: (context, state) {
+          final postId = state.pathParameters['postId']!;
+          return PostDetailScreen(postId: postId);
+        },
       ),
 
       // Story Viewer route

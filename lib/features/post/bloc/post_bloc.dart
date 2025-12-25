@@ -14,6 +14,7 @@ class PostBloc extends Bloc<PostEvent, PostState> {
   })  : _postRepository = postRepository,
         super(PostInitial()) {
     on<CreatePostRequested>(_onCreatePostRequested);
+    on<UpdatePostRequested>(_onUpdatePostRequested);
     on<SaveDraftRequested>(_onSaveDraftRequested);
     on<UploadStoryRequested>(_onUploadStoryRequested);
     on<ResetPostState>(_onResetPostState);
@@ -47,6 +48,27 @@ class PostBloc extends Bloc<PostEvent, PostState> {
       );
 
       emit(PostCreated(postId));
+    } catch (e) {
+      emit(PostError(e.toString()));
+    }
+  }
+
+  /// Handle update post
+  Future<void> _onUpdatePostRequested(
+    UpdatePostRequested event,
+    Emitter<PostState> emit,
+  ) async {
+    emit(PostLoading());
+    try {
+      // Update post
+      await _postRepository.updatePost(
+        postId: event.postId,
+        title: event.title,
+        content: event.content,
+        category: event.category,
+      );
+
+      emit(PostUpdated(event.postId));
     } catch (e) {
       emit(PostError(e.toString()));
     }

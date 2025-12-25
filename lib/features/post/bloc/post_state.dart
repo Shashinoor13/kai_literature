@@ -25,6 +25,16 @@ class PostCreated extends PostState {
   List<Object?> get props => [postId];
 }
 
+/// Post updated successfully
+class PostUpdated extends PostState {
+  final String postId;
+
+  const PostUpdated(this.postId);
+
+  @override
+  List<Object?> get props => [postId];
+}
+
 /// Draft saved successfully
 class DraftSaved extends PostState {
   final String draftId;
