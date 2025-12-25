@@ -136,7 +136,7 @@ class _FeedScreenState extends State<FeedScreen> {
                           const SizedBox(height: AppSizes.lg),
                           ElevatedButton(
                             onPressed: () {
-                              print(state.message);
+                              // print(state.message);
                               _feedBloc.add(const RefreshFeedPosts());
                             },
                             child: const Text('Retry'),

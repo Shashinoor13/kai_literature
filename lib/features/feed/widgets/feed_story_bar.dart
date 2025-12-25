@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
+import 'package:literature/features/feed/models/story_display_data.dart';
 import 'package:literature/features/feed/widgets/feed_add_story_button.dart';
 import 'package:literature/features/feed/widgets/feed_story_avatar.dart';
 import 'package:literature/models/story_model.dart';
@@ -17,8 +18,7 @@ class FeedStoryBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final postRepository = context.read<PostRepository>();
     final authState = context.read<AuthBloc>().state;
-    final currentUserId =
-        authState is Authenticated ? authState.user.id : null;
+    final currentUserId = authState is Authenticated ? authState.user.id : null;
 
     if (currentUserId == null) return const SizedBox.shrink();
 
@@ -57,10 +57,7 @@ class FeedStoryBar extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [
-                Colors.black.withValues(alpha: 0.7),
-                Colors.transparent
-              ],
+              colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent],
             ),
           ),
           child: ListView.builder(
@@ -85,12 +82,17 @@ class FeedStoryBar extends StatelessWidget {
                       ? snapshot.data!.username
                       : '';
                   return FeedStoryAvatar(
-                    authorId: authorId,
-                    storyCount: authorStories.length,
-                    hasUnseen: true, // TODO: Track viewed stories
-                    allAuthorIds: allAuthorIds,
-                    authorIndex: authorIndex,
-                    authorName: authorName,
+                    storyData: StoryDisplayData(
+                      authorId: authorId,
+                      authorName: authorName,
+                      authorInitial: authorName.isNotEmpty
+                          ? authorName[0].toUpperCase()
+                          : '',
+                      storyCount: authorStories.length,
+                      allAuthorIds: allAuthorIds,
+                      authorIndex: authorIndex,
+                      hasUnseen: true,
+                    ),
                   );
                 },
               );

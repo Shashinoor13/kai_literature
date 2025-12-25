@@ -8,6 +8,7 @@ import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
 import 'package:literature/models/post_model.dart';
 import 'package:literature/models/user_model.dart';
+import 'package:literature/models/post_interaction_state.dart';
 import 'package:literature/repositories/post_repository.dart';
 import 'package:literature/repositories/auth_repository.dart';
 import 'package:literature/features/feed/screens/comment_screen.dart';
@@ -29,11 +30,7 @@ class PostDetailScreen extends StatefulWidget {
 class _PostDetailScreenState extends State<PostDetailScreen> {
   PostModel? _post;
   UserModel? _author;
-  bool _isLiked = false;
-  bool _isFavorited = false;
-  int _likesCount = 0;
-  int _commentsCount = 0;
-  int _sharesCount = 0;
+  PostInteractionState? _interactionState;
   bool _isLoading = true;
 
   @override
@@ -55,9 +52,11 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           setState(() {
             _post = post;
             _author = author;
-            _likesCount = post.likesCount;
-            _commentsCount = post.commentsCount;
-            _sharesCount = post.sharesCount;
+            _interactionState = PostInteractionState.initial(
+              likesCount: post.likesCount,
+              commentsCount: post.commentsCount,
+              sharesCount: post.sharesCount,
+            );
             _isLoading = false;
           });
 
@@ -81,7 +80,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Future<void> _checkInteractions() async {
     final authState = context.read<AuthBloc>().state;
-    if (authState is! Authenticated || _post == null) return;
+    if (authState is! Authenticated || _post == null || _interactionState == null) return;
 
     try {
       final postRepo = context.read<PostRepository>();
@@ -96,8 +95,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
       if (mounted) {
         setState(() {
-          _isLiked = isLiked;
-          _isFavorited = isFavorited;
+          _interactionState = _interactionState!.copyWith(
+            isLiked: isLiked,
+            isFavorited: isFavorited,
+          );
         });
       }
     } catch (e) {
@@ -107,26 +108,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Future<void> _toggleLike() async {
     final authState = context.read<AuthBloc>().state;
-    if (authState is! Authenticated || _post == null) return;
+    if (authState is! Authenticated || _post == null || _interactionState == null) return;
 
     try {
       final postRepo = context.read<PostRepository>();
 
-      if (_isLiked) {
-        await postRepo.unlikePost(userId: authState.user.id, postId: _post!.id);
-        setState(() {
-          _isLiked = false;
-          _likesCount--;
-        });
-      } else {
+      // Optimistically update UI
+      setState(() {
+        _interactionState = _interactionState!.toggleLike();
+      });
+
+      // Make API call
+      if (_interactionState!.isLiked) {
         await postRepo.likePost(userId: authState.user.id, postId: _post!.id);
-        setState(() {
-          _isLiked = true;
-          _likesCount++;
-        });
+      } else {
+        await postRepo.unlikePost(userId: authState.user.id, postId: _post!.id);
       }
     } catch (e) {
+      // Revert on error
       if (mounted) {
+        setState(() {
+          _interactionState = _interactionState!.toggleLike();
+        });
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
@@ -136,30 +139,34 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
   Future<void> _toggleFavorite() async {
     final authState = context.read<AuthBloc>().state;
-    if (authState is! Authenticated || _post == null) return;
+    if (authState is! Authenticated || _post == null || _interactionState == null) return;
 
     try {
       final postRepo = context.read<PostRepository>();
 
-      if (_isFavorited) {
-        await postRepo.unfavoritePost(
-          userId: authState.user.id,
-          postId: _post!.id,
-        );
-        setState(() {
-          _isFavorited = false;
-        });
-      } else {
+      // Optimistically update UI
+      setState(() {
+        _interactionState = _interactionState!.toggleFavorite();
+      });
+
+      // Make API call
+      if (_interactionState!.isFavorited) {
         await postRepo.favoritePost(
           userId: authState.user.id,
           postId: _post!.id,
         );
-        setState(() {
-          _isFavorited = true;
-        });
+      } else {
+        await postRepo.unfavoritePost(
+          userId: authState.user.id,
+          postId: _post!.id,
+        );
       }
     } catch (e) {
+      // Revert on error
       if (mounted) {
+        setState(() {
+          _interactionState = _interactionState!.toggleFavorite();
+        });
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
@@ -191,7 +198,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (_post == null) {
+    if (_post == null || _interactionState == null) {
       return Scaffold(
         appBar: AppBar(title: const Text('Post Not Found')),
         body: const Center(child: Text('This post could not be found')),
@@ -204,8 +211,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         actions: [
           IconButton(
             icon: HeroIcon(
-              _isFavorited ? HeroIcons.bookmark : HeroIcons.bookmark,
-              style: _isFavorited ? HeroIconStyle.solid : HeroIconStyle.outline,
+              HeroIcons.bookmark,
+              style: _interactionState!.isFavorited
+                  ? HeroIconStyle.solid
+                  : HeroIconStyle.outline,
             ),
             onPressed: _toggleFavorite,
           ),
@@ -231,14 +240,14 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
             // Interaction Stats
             PostInteractionStats(
-              likesCount: _likesCount,
-              commentsCount: _commentsCount,
-              sharesCount: _sharesCount,
+              likesCount: _interactionState!.likesCount,
+              commentsCount: _interactionState!.commentsCount,
+              sharesCount: _interactionState!.sharesCount,
             ),
 
             // Action Buttons
             PostActionButtons(
-              isLiked: _isLiked,
+              isLiked: _interactionState!.isLiked,
               onLikePressed: _toggleLike,
               onCommentPressed: _openComments,
               onSharePressed: _sharePost,

@@ -54,7 +54,7 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
     _currentFeedType = event.feedType;
     emit(FeedLoading());
     await _loadPosts(emit, event.feedType, _currentContentFilter);
-    print('Feed type changed to: ${event.feedType}'); // Debug log
+    // print('Feed type changed to: ${event.feedType}'); // Debug log
   }
 
   /// Change content filter (All/Poem/Story/Joke)

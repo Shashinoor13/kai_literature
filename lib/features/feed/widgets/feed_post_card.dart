@@ -10,6 +10,7 @@ import 'package:literature/features/feed/widgets/feed_post_content.dart';
 import 'package:literature/features/feed/widgets/feed_post_interactions.dart';
 import 'package:literature/models/post_model.dart';
 import 'package:literature/models/user_model.dart';
+import 'package:literature/models/post_interaction_state.dart';
 import 'package:literature/repositories/auth_repository.dart';
 import 'package:literature/repositories/post_repository.dart';
 
@@ -29,20 +30,18 @@ class FeedPostCard extends StatefulWidget {
 class _FeedPostCardState extends State<FeedPostCard>
     with SingleTickerProviderStateMixin {
   UserModel? _author;
-  bool _isLiked = false;
-  bool _isFavorited = false;
-  int _likesCount = 0;
-  int _commentsCount = 0;
-  int _sharesCount = 0;
+  late PostInteractionState _interactionState;
   late AnimationController _likeAnimationController;
   late Animation<double> _likeScaleAnimation;
 
   @override
   void initState() {
     super.initState();
-    _likesCount = widget.post.likesCount;
-    _commentsCount = widget.post.commentsCount;
-    _sharesCount = widget.post.sharesCount;
+    _interactionState = PostInteractionState.initial(
+      likesCount: widget.post.likesCount,
+      commentsCount: widget.post.commentsCount,
+      sharesCount: widget.post.sharesCount,
+    );
     _loadAuthorData();
     _checkInteractions();
 
@@ -100,8 +99,10 @@ class _FeedPostCardState extends State<FeedPostCard>
 
       if (mounted) {
         setState(() {
-          _isLiked = isLiked;
-          _isFavorited = isFavorited;
+          _interactionState = _interactionState.copyWith(
+            isLiked: isLiked,
+            isFavorited: isFavorited,
+          );
         });
       }
     } catch (e) {
@@ -119,27 +120,29 @@ class _FeedPostCardState extends State<FeedPostCard>
       // Animate
       _likeAnimationController.forward(from: 0);
 
-      if (_isLiked) {
-        await postRepo.unlikePost(
-          userId: authState.user.id,
-          postId: widget.post.id,
-        );
-        setState(() {
-          _isLiked = false;
-          _likesCount--;
-        });
-      } else {
+      // Optimistically update UI
+      setState(() {
+        _interactionState = _interactionState.toggleLike();
+      });
+
+      // Make API call
+      if (_interactionState.isLiked) {
         await postRepo.likePost(
           userId: authState.user.id,
           postId: widget.post.id,
         );
-        setState(() {
-          _isLiked = true;
-          _likesCount++;
-        });
+      } else {
+        await postRepo.unlikePost(
+          userId: authState.user.id,
+          postId: widget.post.id,
+        );
       }
     } catch (e) {
+      // Revert on error
       if (mounted) {
+        setState(() {
+          _interactionState = _interactionState.toggleLike();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
         );
@@ -154,25 +157,29 @@ class _FeedPostCardState extends State<FeedPostCard>
     try {
       final postRepo = context.read<PostRepository>();
 
-      if (_isFavorited) {
-        await postRepo.unfavoritePost(
-          userId: authState.user.id,
-          postId: widget.post.id,
-        );
-        setState(() {
-          _isFavorited = false;
-        });
-      } else {
+      // Optimistically update UI
+      setState(() {
+        _interactionState = _interactionState.toggleFavorite();
+      });
+
+      // Make API call
+      if (_interactionState.isFavorited) {
         await postRepo.favoritePost(
           userId: authState.user.id,
           postId: widget.post.id,
         );
-        setState(() {
-          _isFavorited = true;
-        });
+      } else {
+        await postRepo.unfavoritePost(
+          userId: authState.user.id,
+          postId: widget.post.id,
+        );
       }
     } catch (e) {
+      // Revert on error
       if (mounted) {
+        setState(() {
+          _interactionState = _interactionState.toggleFavorite();
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: ${e.toString()}')),
         );
@@ -270,11 +277,11 @@ class _FeedPostCardState extends State<FeedPostCard>
             right: AppSizes.sm,
             bottom: 20,
             child: FeedPostInteractions(
-              isLiked: _isLiked,
-              isFavorited: _isFavorited,
-              likesCount: _likesCount,
-              commentsCount: _commentsCount,
-              sharesCount: _sharesCount,
+              isLiked: _interactionState.isLiked,
+              isFavorited: _interactionState.isFavorited,
+              likesCount: _interactionState.likesCount,
+              commentsCount: _interactionState.commentsCount,
+              sharesCount: _interactionState.sharesCount,
               onLikeTap: _toggleLike,
               onCommentTap: _openComments,
               onFavoriteTap: _toggleFavorite,
