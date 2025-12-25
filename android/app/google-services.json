@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "353302887560",
+    "project_id": "ram-literature-v2",
+    "storage_bucket": "ram-literature-v2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:353302887560:android:f5a89502dafb419050733d",
+        "android_client_info": {
+          "package_name": "com.literature.literature"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCGJ6UQJsXuuil87kOUTzQBgjVAN0n79Fw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

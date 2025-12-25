@@ -1,0 +1,34 @@
+{
+  "firestore": {
+    "indexes": "firestore.indexes.json"
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "ram-literature-v2",
+          "appId": "1:353302887560:android:f5a89502dafb419050733d",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "ram-literature-v2",
+          "appId": "1:353302887560:ios:b6fd631b286f7c8a50733d",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "ram-literature-v2",
+          "configurations": {
+            "android": "1:353302887560:android:f5a89502dafb419050733d",
+            "ios": "1:353302887560:ios:b6fd631b286f7c8a50733d",
+            "web": "1:353302887560:web:b5f836059509a33450733d"
+          }
+        }
+      }
+    }
+  }
+}
