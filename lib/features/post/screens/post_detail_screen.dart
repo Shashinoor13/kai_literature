@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:literature/core/constants/sizes.dart';
+import 'package:literature/core/utils/format_utils.dart';
+import 'package:literature/core/utils/category_utils.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
 import 'package:literature/models/post_model.dart';
@@ -9,6 +11,10 @@ import 'package:literature/models/user_model.dart';
 import 'package:literature/repositories/post_repository.dart';
 import 'package:literature/repositories/auth_repository.dart';
 import 'package:literature/features/feed/screens/comment_screen.dart';
+import 'package:literature/features/post/widgets/post_author_header.dart';
+import 'package:literature/features/post/widgets/post_content_section.dart';
+import 'package:literature/features/post/widgets/post_interaction_stats.dart';
+import 'package:literature/features/post/widgets/post_action_buttons.dart';
 
 /// Post Detail Screen - Full post view with interactions
 class PostDetailScreen extends StatefulWidget {
@@ -178,50 +184,6 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     ).showSnackBar(const SnackBar(content: Text('Share feature coming soon')));
   }
 
-  Color _getCategoryColor(String category) {
-    switch (category.toLowerCase()) {
-      case 'poem':
-        return const Color(0xFF90EE90);
-      case 'joke':
-        return const Color(0xFFFFD700);
-      case 'story':
-        return const Color(0xFFADD8E6);
-      default:
-        return Colors.grey[300]!;
-    }
-  }
-
-  Color _getCategoryTextColor(String category) {
-    switch (category.toLowerCase()) {
-      case 'poem':
-      case 'joke':
-      case 'story':
-        return Colors.black87;
-      default:
-        return Colors.white;
-    }
-  }
-
-  String _getTimeAgo(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays > 365) {
-      final years = (difference.inDays / 365).floor();
-      return '${years}y ago';
-    } else if (difference.inDays > 30) {
-      final months = (difference.inDays / 30).floor();
-      return '${months}mo ago';
-    } else if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -254,240 +216,36 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Author Header
-            Container(
-              padding: const EdgeInsets.all(AppSizes.md),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(context).dividerColor,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: Colors.grey[300],
-                    child: Text(
-                      _author?.username[0].toUpperCase() ?? '?',
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _author?.username ?? 'Unknown',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          _getTimeAgo(_post!.createdAt),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.sm,
-                      vertical: AppSizes.xs,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getCategoryColor(_post!.category),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _post!.category.toUpperCase(),
-                      style: TextStyle(
-                        color: _getCategoryTextColor(_post!.category),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            PostAuthorHeader(
+              author: _author,
+              post: _post!,
+              getTimeAgo: FormatUtils.getTimeAgo,
+              getCategoryColor: CategoryUtils.getCategoryColor,
+              getCategoryTextColor: CategoryUtils.getCategoryTextColor,
             ),
 
             // Post Content
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.lg),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_post!.title.isNotEmpty) ...[
-                    Text(
-                      _post!.title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.md),
-                  ],
-                  Text(
-                    _post!.content,
-                    style: const TextStyle(fontSize: 18, height: 1.6),
-                  ),
-                ],
-              ),
-            ),
+            PostContentSection(post: _post!),
 
             const SizedBox(height: AppSizes.lg),
 
             // Interaction Stats
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSizes.lg,
-                vertical: AppSizes.md,
-              ),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(
-                    color: Theme.of(context).dividerColor,
-                    width: 1,
-                  ),
-                  bottom: BorderSide(
-                    color: Theme.of(context).dividerColor,
-                    width: 1,
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  _StatItem(
-                    icon: HeroIcons.heart,
-                    count: _likesCount,
-                    label: 'Likes',
-                  ),
-                  const SizedBox(width: AppSizes.xl),
-                  _StatItem(
-                    icon: HeroIcons.chatBubbleLeft,
-                    count: _commentsCount,
-                    label: 'Comments',
-                  ),
-                  const SizedBox(width: AppSizes.xl),
-                  _StatItem(
-                    icon: HeroIcons.share,
-                    count: _sharesCount,
-                    label: 'Shares',
-                  ),
-                ],
-              ),
+            PostInteractionStats(
+              likesCount: _likesCount,
+              commentsCount: _commentsCount,
+              sharesCount: _sharesCount,
             ),
 
             // Action Buttons
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.md),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _toggleLike,
-                      icon: HeroIcon(
-                        HeroIcons.heart,
-                        style: _isLiked
-                            ? HeroIconStyle.solid
-                            : HeroIconStyle.outline,
-                        size: 20,
-                        color: _isLiked ? Colors.red : null,
-                      ),
-                      label: Text(_isLiked ? 'Liked' : 'Like'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSizes.md,
-                        ),
-                        side: BorderSide(
-                          color: _isLiked
-                              ? Colors.red
-                              : Theme.of(context).dividerColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.sm),
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _openComments,
-                      icon: const HeroIcon(
-                        HeroIcons.chatBubbleLeft,
-                        style: HeroIconStyle.outline,
-                        size: 20,
-                      ),
-                      label: const Text('Comment'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: AppSizes.md,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: AppSizes.sm),
-                  OutlinedButton(
-                    onPressed: _sharePost,
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.all(AppSizes.md),
-                      minimumSize: const Size(48, 48),
-                    ),
-                    child: const HeroIcon(
-                      HeroIcons.share,
-                      style: HeroIconStyle.outline,
-                      size: 20,
-                    ),
-                  ),
-                ],
-              ),
+            PostActionButtons(
+              isLiked: _isLiked,
+              onLikePressed: _toggleLike,
+              onCommentPressed: _openComments,
+              onSharePressed: _sharePost,
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Stat item widget for interaction counts
-class _StatItem extends StatelessWidget {
-  final HeroIcons icon;
-  final int count;
-  final String label;
-
-  const _StatItem({
-    required this.icon,
-    required this.count,
-    required this.label,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        HeroIcon(
-          icon,
-          style: HeroIconStyle.outline,
-          size: 20,
-          color: Colors.grey[600],
-        ),
-        const SizedBox(width: AppSizes.xs),
-        Text(
-          '$count',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
-      ],
     );
   }
 }
