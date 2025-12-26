@@ -12,7 +12,6 @@ import 'package:literature/features/feed/widgets/feed_post_interactions.dart';
 import 'package:literature/models/post_model.dart';
 import 'package:literature/models/user_model.dart';
 import 'package:literature/models/post_interaction_state.dart';
-import 'package:literature/models/report_reason.dart';
 import 'package:literature/repositories/auth_repository.dart';
 import 'package:literature/repositories/post_repository.dart';
 
