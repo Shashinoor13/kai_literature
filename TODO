@@ -2,6 +2,5 @@ Implement Report post feature based on the context, like scam,voilence and all t
 Commit the changes.
 Refactor the codebase into smaller maintainable parts.
 If the content of the post is too large make swipable cards sharing the heading that shows the total number of pages it has.
-Next is to redesign the profile pages post cards and add edit,delete functionality to them.
 Redesign the login and the signup screens to match the theme of the app.
-Add shimmer animation instead of the default circular progress indicator.
+Add shimmer animation instead of the default circular progress indicator throughout the app.

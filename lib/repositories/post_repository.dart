@@ -4,6 +4,7 @@ import 'package:literature/models/post_model.dart';
 import 'package:literature/models/draft_model.dart';
 import 'package:literature/models/comment_model.dart';
 import 'package:literature/models/story_model.dart';
+import 'package:literature/models/report_reason.dart';
 import 'dart:io';
 
 /// Repository for posts, drafts, and stories
@@ -710,5 +711,30 @@ class PostRepository {
       }
       return posts;
     });
+  }
+
+  /// Report a post
+  /// Creates a report document in Firestore for admin review
+  Future<void> reportPost({
+    required String postId,
+    required String reporterId,
+    required ReportReason reason,
+    String? additionalDetails,
+  }) async {
+    try {
+      final reportRef = _firestore.collection('reports').doc();
+      final report = PostReport(
+        reportId: reportRef.id,
+        postId: postId,
+        reporterId: reporterId,
+        reason: reason,
+        additionalDetails: additionalDetails,
+        createdAt: DateTime.now(),
+      );
+
+      await reportRef.set(report.toFirestore());
+    } catch (e) {
+      throw Exception('Failed to report post: $e');
+    }
   }
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/core/widgets/search_bar_widget.dart';
+import 'package:literature/core/widgets/shimmer_loading.dart';
 import 'package:literature/features/feed/bloc/feed_bloc.dart';
 import 'package:literature/features/feed/bloc/feed_event.dart';
 import 'package:literature/features/feed/bloc/feed_state.dart';
@@ -113,7 +114,7 @@ class _FeedScreenState extends State<FeedScreen> {
               BlocBuilder<FeedBloc, FeedState>(
                 builder: (context, state) {
                   if (state is FeedLoading) {
-                    return const Center(child: CircularProgressIndicator());
+                    return const ShimmerPostCard();
                   }
 
                   if (state is FeedError) {

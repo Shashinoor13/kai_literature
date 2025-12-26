@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heroicons/heroicons.dart';
+import 'package:literature/core/constants/colors.dart';
 import 'package:literature/core/constants/sizes.dart';
+import 'package:literature/core/widgets/shimmer_loading.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_event.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
@@ -51,8 +54,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
           if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(state.message),
-                backgroundColor: Theme.of(context).colorScheme.error,
+                content: Row(
+                  children: [
+                    const HeroIcon(
+                      HeroIcons.exclamationCircle,
+                      size: 20,
+                      color: AppColors.white,
+                    ),
+                    const SizedBox(width: AppSizes.sm),
+                    Expanded(child: Text(state.message)),
+                  ],
+                ),
+                backgroundColor: AppColors.gray900,
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+                  side: const BorderSide(color: AppColors.gray700),
+                ),
                 duration: const Duration(seconds: 3),
               ),
             );
@@ -134,10 +152,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         labelText: 'Password',
                         hintText: 'Enter your password',
                         suffixIcon: IconButton(
-                          icon: Icon(
+                          icon: HeroIcon(
                             _isPasswordVisible
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
+                                ? HeroIcons.eye
+                                : HeroIcons.eyeSlash,
+                            size: 20,
                           ),
                           onPressed: () {
                             setState(() {
@@ -166,10 +185,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         labelText: 'Confirm Password',
                         hintText: 'Re-enter your password',
                         suffixIcon: IconButton(
-                          icon: Icon(
+                          icon: HeroIcon(
                             _isConfirmPasswordVisible
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
+                                ? HeroIcons.eye
+                                : HeroIcons.eyeSlash,
+                            size: 20,
                           ),
                           onPressed: () {
                             setState(() {
@@ -194,11 +214,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ElevatedButton(
                       onPressed: state is AuthLoading ? null : _handleSignUp,
                       child: state is AuthLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
+                          ? const ShimmerLoader(size: 20)
                           : const Text('Sign Up'),
                     ),
                     const SizedBox(height: AppSizes.md),

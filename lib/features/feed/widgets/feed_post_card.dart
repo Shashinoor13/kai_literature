@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:literature/core/constants/sizes.dart';
+import 'package:literature/core/widgets/report_post_dialog.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
 import 'package:literature/features/feed/screens/comment_screen.dart';
@@ -11,6 +12,7 @@ import 'package:literature/features/feed/widgets/feed_post_interactions.dart';
 import 'package:literature/models/post_model.dart';
 import 'package:literature/models/user_model.dart';
 import 'package:literature/models/post_interaction_state.dart';
+import 'package:literature/models/report_reason.dart';
 import 'package:literature/repositories/auth_repository.dart';
 import 'package:literature/repositories/post_repository.dart';
 
@@ -225,27 +227,38 @@ class _FeedPostCardState extends State<FeedPostCard>
   }
 
   void _reportPost() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! Authenticated) return;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Report Post'),
-        content: const Text('Are you sure you want to report this post?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Post reported')),
+      builder: (context) => ReportPostDialog(
+        onReport: (reason, details) async {
+          try {
+            await context.read<PostRepository>().reportPost(
+                  postId: widget.post.id,
+                  reporterId: authState.user.id,
+                  reason: reason,
+                  additionalDetails: details,
+                );
+
+            if (mounted) {
+              ScaffoldMessenger.of(this.context).showSnackBar(
+                const SnackBar(
+                  content: Text('Report submitted successfully'),
+                ),
               );
-            },
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Report'),
-          ),
-        ],
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(this.context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to submit report: ${e.toString()}'),
+                ),
+              );
+            }
+          }
+        },
       ),
     );
   }

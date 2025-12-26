@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:literature/core/constants/sizes.dart';
+import 'package:literature/core/widgets/shimmer_loading.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
 import 'package:literature/features/feed/models/story_display_data.dart';
@@ -26,9 +27,14 @@ class FeedStoryBar extends StatelessWidget {
       stream: postRepository.getActiveStories(currentUserId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SizedBox(
+          return Container(
             height: 110,
-            child: Center(child: CircularProgressIndicator()),
+            padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: 5,
+              itemBuilder: (context, index) => const ShimmerStoryAvatar(),
+            ),
           );
         }
 

@@ -4,6 +4,7 @@ import 'package:heroicons/heroicons.dart';
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/core/utils/format_utils.dart';
 import 'package:literature/core/utils/category_utils.dart';
+import 'package:literature/core/widgets/shimmer_loading.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
 import 'package:literature/models/post_model.dart';
@@ -195,7 +196,20 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        appBar: AppBar(title: const Text('Loading...')),
+        body: Padding(
+          padding: const EdgeInsets.all(AppSizes.lg),
+          child: SingleChildScrollView(
+            child: Column(
+              children: List.generate(
+                1,
+                (index) => const ShimmerListItem(),
+              ),
+            ),
+          ),
+        ),
+      );
     }
 
     if (_post == null || _interactionState == null) {
