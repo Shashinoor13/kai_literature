@@ -13,6 +13,7 @@ class UserModel extends Equatable {
   final int followingCount;
   final int postsCount;
   final bool hasActiveStory;
+  final DateTime? dateOfBirth;  // Optional for existing users
   final DateTime createdAt;
 
   const UserModel({
@@ -25,6 +26,7 @@ class UserModel extends Equatable {
     this.followingCount = 0,
     this.postsCount = 0,
     this.hasActiveStory = false,
+    this.dateOfBirth,
     required this.createdAt,
   });
 
@@ -41,7 +43,12 @@ class UserModel extends Equatable {
       followingCount: data['followingCount'] ?? 0,
       postsCount: data['postsCount'] ?? 0,
       hasActiveStory: data['hasActiveStory'] ?? false,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      dateOfBirth: data['dateOfBirth'] != null
+          ? (data['dateOfBirth'] as Timestamp).toDate()
+          : null,
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 
@@ -56,6 +63,7 @@ class UserModel extends Equatable {
       'followingCount': followingCount,
       'postsCount': postsCount,
       'hasActiveStory': hasActiveStory,
+      if (dateOfBirth != null) 'dateOfBirth': Timestamp.fromDate(dateOfBirth!),
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
@@ -71,6 +79,7 @@ class UserModel extends Equatable {
     int? followingCount,
     int? postsCount,
     bool? hasActiveStory,
+    DateTime? dateOfBirth,
     DateTime? createdAt,
   }) {
     return UserModel(
@@ -83,6 +92,7 @@ class UserModel extends Equatable {
       followingCount: followingCount ?? this.followingCount,
       postsCount: postsCount ?? this.postsCount,
       hasActiveStory: hasActiveStory ?? this.hasActiveStory,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -98,6 +108,7 @@ class UserModel extends Equatable {
         followingCount,
         postsCount,
         hasActiveStory,
+        dateOfBirth,
         createdAt,
       ];
 }

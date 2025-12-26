@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:heroicons/heroicons.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
@@ -15,10 +16,7 @@ import 'package:literature/repositories/auth_repository.dart';
 class ChatScreen extends StatefulWidget {
   final String conversationId;
 
-  const ChatScreen({
-    super.key,
-    required this.conversationId,
-  });
+  const ChatScreen({super.key, required this.conversationId});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -28,34 +26,62 @@ class _ChatScreenState extends State<ChatScreen> {
   final _messageController = TextEditingController();
   final _authRepository = AuthRepository();
   String? _otherUserId;
+  String? _otherUsername;
+  String? _otherProfileImage;
+  bool _isBlocked = false; // TODO: Implement actual blocking check
+  bool _isCheckingBlock = true;
 
   @override
   void initState() {
     super.initState();
     _loadOtherUserId();
+    _checkBlockStatus();
     context.read<MessagingBloc>().add(LoadMessages(widget.conversationId));
 
     // Mark messages as read
     final authState = context.read<AuthBloc>().state;
     if (authState is Authenticated) {
       context.read<MessagingBloc>().add(
-            MarkMessagesRead(
-              conversationId: widget.conversationId,
-              currentUserId: authState.user.id,
-            ),
-          );
+        MarkMessagesRead(
+          conversationId: widget.conversationId,
+          currentUserId: authState.user.id,
+        ),
+      );
     }
   }
 
-  void _loadOtherUserId() {
+  Future<void> _checkBlockStatus() async {
+    // TODO: Implement actual blocking check with backend
+    // For now, just set to false
+    await Future.delayed(const Duration(milliseconds: 100));
+    setState(() {
+      _isBlocked = false;
+      _isCheckingBlock = false;
+    });
+  }
+
+  void _loadOtherUserId() async {
     final authState = context.read<AuthBloc>().state;
     if (authState is! Authenticated) return;
 
     final participants = widget.conversationId.split('_');
-    _otherUserId = participants.firstWhere(
+    final otherId = participants.firstWhere(
       (id) => id != authState.user.id,
       orElse: () => '',
     );
+
+    try {
+      final otherUser = await _authRepository.getUserData(otherId);
+      setState(() {
+        _otherUserId = otherId;
+        _otherUsername = otherUser.username;
+        _otherProfileImage = otherUser.profileImageUrl;
+      });
+    } catch (e) {
+      setState(() {
+        _otherUserId = otherId;
+      });
+    }
   }
 
   @override
@@ -65,29 +91,20 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _sendMessage(String senderId) {
+    if (_isBlocked) return;
+
     final content = _messageController.text.trim();
     if (content.isEmpty) return;
 
     context.read<MessagingBloc>().add(
-          SendMessage(
-            conversationId: widget.conversationId,
-            senderId: senderId,
-            content: content,
-          ),
-        );
+      SendMessage(
+        conversationId: widget.conversationId,
+        senderId: senderId,
+        content: content,
+      ),
+    );
 
     _messageController.clear();
-  }
-
-  Future<String> _getOtherUsername() async {
-    if (_otherUserId == null || _otherUserId!.isEmpty) return '';
-
-    try {
-      final otherUser = await _authRepository.getUserData(_otherUserId!);
-      return otherUser.username;
-    } catch (e) {
-      return '';
-    }
   }
 
   void _navigateToUserProfile() {
@@ -102,37 +119,111 @@ class _ChatScreenState extends State<ChatScreen> {
       builder: (context, authState) {
         if (authState is! Authenticated) {
           return const Scaffold(
-            body: Center(child: Text('Please log in')),
+            backgroundColor: Colors.black,
+            body: Center(
+              child: Text(
+                'Please log in',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
           );
         }
 
         return Scaffold(
+          backgroundColor: Colors.black,
           appBar: AppBar(
+            backgroundColor: Colors.black,
+            elevation: 0,
+            leading: IconButton(
+              icon: const HeroIcon(HeroIcons.arrowLeft, color: Colors.white),
+              onPressed: () => context.pop(),
+            ),
             title: InkWell(
               onTap: _navigateToUserProfile,
-              child: FutureBuilder<String>(
-                future: _getOtherUsername(),
-                builder: (context, snapshot) {
-                  return Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(snapshot.data ?? 'Chat'),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.arrow_forward_ios, size: 14),
-                    ],
-                  );
-                },
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: Colors.white12,
+                    backgroundImage:
+                        _otherProfileImage != null &&
+                            _otherProfileImage!.isNotEmpty
+                        ? NetworkImage(_otherProfileImage!)
+                        : null,
+                    child:
+                        _otherProfileImage == null ||
+                            _otherProfileImage!.isEmpty
+                        ? Text(
+                            (_otherUsername ?? '?')[0].toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(width: AppSizes.sm),
+                  Flexible(
+                    child: Text(
+                      _otherUsername ?? 'Chat',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: AppSizes.xs),
+                  const HeroIcon(
+                    HeroIcons.chevronRight,
+                    size: 16,
+                    color: Colors.white70,
+                  ),
+                ],
               ),
             ),
           ),
           body: Column(
             children: [
+              // Blocked user banner
+              if (!_isCheckingBlock && _isBlocked)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSizes.md),
+                  decoration: const BoxDecoration(
+                    color: Colors.white12,
+                    border: Border(
+                      bottom: BorderSide(color: Colors.white24, width: 1),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const HeroIcon(
+                        HeroIcons.noSymbol,
+                        size: 20,
+                        color: Colors.white70,
+                      ),
+                      const SizedBox(width: AppSizes.sm),
+                      Expanded(
+                        child: Text(
+                          'You have blocked this person and can\'t send messages',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.white70,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
               // Messages list
               Expanded(
                 child: BlocBuilder<MessagingBloc, MessagingState>(
                   buildWhen: (previous, current) {
-                    // Only rebuild when we get new MessagesLoaded for this conversation
-                    // or when there's an error
                     if (current is MessagesLoaded &&
                         current.conversationId == widget.conversationId) {
                       return true;
@@ -140,7 +231,6 @@ class _ChatScreenState extends State<ChatScreen> {
                     if (current is MessagingError) {
                       return true;
                     }
-                    // Don't rebuild for MessageSent or other states
                     return previous is! MessagesLoaded;
                   },
                   builder: (context, state) {
@@ -149,7 +239,11 @@ class _ChatScreenState extends State<ChatScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.error_outline, size: 48, color: Colors.grey),
+                            const HeroIcon(
+                              HeroIcons.exclamationTriangle,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
                             const SizedBox(height: AppSizes.md),
                             Text(
                               'Error: ${state.message}',
@@ -165,7 +259,33 @@ class _ChatScreenState extends State<ChatScreen> {
                         state.conversationId == widget.conversationId) {
                       if (state.messages.isEmpty) {
                         return const Center(
-                          child: Text('No messages yet'),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              HeroIcon(
+                                HeroIcons.chatBubbleLeftRight,
+                                size: 64,
+                                color: Colors.grey,
+                              ),
+                              SizedBox(height: AppSizes.md),
+                              Text(
+                                'No messages yet',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.grey,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              SizedBox(height: AppSizes.xs),
+                              Text(
+                                'Send a message to start the conversation',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
                         );
                       }
 
@@ -182,42 +302,44 @@ class _ChatScreenState extends State<ChatScreen> {
                                 ? Alignment.centerRight
                                 : Alignment.centerLeft,
                             child: Container(
-                              margin: const EdgeInsets.only(bottom: AppSizes.sm),
+                              margin: const EdgeInsets.only(
+                                bottom: AppSizes.md,
+                              ),
                               padding: const EdgeInsets.symmetric(
                                 horizontal: AppSizes.md,
                                 vertical: AppSizes.sm,
                               ),
                               decoration: BoxDecoration(
-                                color: isMe
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context).cardTheme.color,
-                                borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+                                color: isMe ? Colors.white : Colors.white12,
+                                borderRadius: BorderRadius.circular(
+                                  AppSizes.radiusMd,
+                                ),
                               ),
                               constraints: BoxConstraints(
-                                maxWidth: MediaQuery.of(context).size.width * 0.7,
+                                maxWidth:
+                                    MediaQuery.of(context).size.width * 0.7,
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     message.content,
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                          color: isMe
-                                              ? Theme.of(context).colorScheme.onPrimary
-                                              : null,
-                                        ),
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w400,
+                                      color: isMe ? Colors.black : Colors.white,
+                                      height: 1.5,
+                                    ),
                                   ),
                                   const SizedBox(height: AppSizes.xs),
                                   Text(
                                     timeago.format(message.timestamp),
-                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                          color: isMe
-                                              ? Theme.of(context)
-                                                  .colorScheme
-                                                  .onPrimary
-                                                  .withValues(alpha: 0.7)
-                                              : null,
-                                        ),
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: isMe
+                                          ? Colors.black54
+                                          : Colors.white54,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -227,41 +349,92 @@ class _ChatScreenState extends State<ChatScreen> {
                       );
                     }
 
-                    return const Center(child: CircularProgressIndicator());
+                    return const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    );
                   },
                 ),
               ),
 
               // Message input
               Container(
-                padding: const EdgeInsets.all(AppSizes.sm),
-                decoration: BoxDecoration(
+                padding: const EdgeInsets.all(AppSizes.md),
+                decoration: const BoxDecoration(
+                  color: Colors.black,
                   border: Border(
-                    top: BorderSide(
-                      color: Theme.of(context).dividerColor,
-                      width: AppSizes.borderWidth,
-                    ),
+                    top: BorderSide(color: Colors.white12, width: 1),
                   ),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _messageController,
-                        decoration: const InputDecoration(
-                          hintText: 'Type a message...',
-                          border: InputBorder.none,
+                child: SafeArea(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppSizes.md,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white12,
+                            borderRadius: BorderRadius.circular(24),
+                          ),
+                          child: TextField(
+                            controller: _messageController,
+                            enabled: !_isBlocked,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            decoration: InputDecoration(
+                              fillColor: Colors.transparent,
+                              hintText: 'Message...',
+                              hintStyle: const TextStyle(
+                                color: Colors.white54,
+                                fontSize: 15,
+                              ),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              disabledBorder: InputBorder.none,
+                              errorBorder: InputBorder.none,
+                              focusedErrorBorder: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                              ),
+                              isDense: false,
+                            ),
+                            maxLines: null,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: !_isBlocked
+                                ? (_) => _sendMessage(authState.user.id)
+                                : null,
+                          ),
                         ),
-                        maxLines: null,
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (_) => _sendMessage(authState.user.id),
                       ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.send),
-                      onPressed: () => _sendMessage(authState.user.id),
-                    ),
-                  ],
+                      const SizedBox(width: AppSizes.sm),
+                      GestureDetector(
+                        onTap: !_isBlocked
+                            ? () => _sendMessage(authState.user.id)
+                            : null,
+                        child: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: _isBlocked ? Colors.white24 : Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: HeroIcon(
+                              HeroIcons.paperAirplane,
+                              size: 20,
+                              color: _isBlocked ? Colors.white38 : Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

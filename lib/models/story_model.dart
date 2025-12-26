@@ -33,6 +33,7 @@ class StoryModel extends Equatable {
 
   factory StoryModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    final now = DateTime.now();
     return StoryModel(
       id: doc.id,
       authorId: data['authorId'] ?? '',
@@ -44,8 +45,12 @@ class StoryModel extends Equatable {
       backgroundColor: data['backgroundColor'] ?? 'black',
       duration: data['duration'] ?? 5,
       viewsCount: data['viewsCount'] ?? 0,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      expiresAt: (data['expiresAt'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : now,
+      expiresAt: data['expiresAt'] != null
+          ? (data['expiresAt'] as Timestamp).toDate()
+          : now.add(const Duration(days: 7)),
     );
   }
 

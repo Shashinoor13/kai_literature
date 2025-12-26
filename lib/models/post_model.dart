@@ -45,7 +45,9 @@ class PostModel extends Equatable {
       sharesCount: data['sharesCount'] ?? 0,
       favoritesCount: data['favoritesCount'] ?? 0,
       trendingScore: (data['trendingScore'] ?? 0).toDouble(),
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 

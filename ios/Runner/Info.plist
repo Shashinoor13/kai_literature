@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Literature needs access to your photo library to let you share images in your posts and stories</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Literature needs access to your camera to capture photos for your posts and stories</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Literature needs access to your microphone to record videos for your stories</string>
 </dict>
 </plist>

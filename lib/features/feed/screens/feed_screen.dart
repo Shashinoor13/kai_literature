@@ -113,7 +113,11 @@ class _FeedScreenState extends State<FeedScreen> {
               BlocBuilder<FeedBloc, FeedState>(
                 builder: (context, state) {
                   if (state is FeedLoading) {
-                    return const SizedBox.shrink();
+                    return const Center(
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                      ),
+                    );
                   }
 
                   if (state is FeedError) {
@@ -203,16 +207,20 @@ class _FeedScreenState extends State<FeedScreen> {
               AnimatedPositioned(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeInOut,
-                top: _showStoryBar ? 120 : -300,
+                top: _showStoryBar ? 120 : -200,
                 left: 0,
                 right: 0,
-                child: Column(
-                  children: [
-                    const FeedStoryBar(),
-                    const SizedBox(height: AppSizes.xs),
-                    FeedFilterChips(feedBloc: _feedBloc),
-                  ],
-                ),
+                child: const FeedStoryBar(),
+              ),
+
+              // Filter Chips - Always visible, moves up when story bar hides
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                top: _showStoryBar ? 240 : 120,
+                left: 0,
+                right: 0,
+                child: FeedFilterChips(feedBloc: _feedBloc),
               ),
             ],
           ),

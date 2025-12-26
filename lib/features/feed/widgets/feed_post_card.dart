@@ -229,8 +229,10 @@ class _FeedPostCardState extends State<FeedPostCard>
     final authState = context.read<AuthBloc>().state;
     if (authState is! Authenticated) return;
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) => ReportPostDialog(
         onReport: (reason, details) async {
           try {

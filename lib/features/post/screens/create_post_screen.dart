@@ -140,7 +140,11 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
             },
             child: Scaffold(
               appBar: AppBar(
-                title: Text(_isEditing ? 'Edit Post' : 'Create'),
+                title: Text(
+                  _isEditing ? 'Edit Post' : 'Create',
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                centerTitle: false,
                 actions: [
                   if (_backgroundImage != null)
                     IconButton(

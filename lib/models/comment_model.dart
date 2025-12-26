@@ -27,7 +27,9 @@ class CommentModel {
       authorId: data['authorId'] as String,
       content: data['content'] as String,
       parentCommentId: data['parentCommentId'] as String?,
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : DateTime.now(),
     );
   }
 

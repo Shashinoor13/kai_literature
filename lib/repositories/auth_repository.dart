@@ -87,6 +87,41 @@ class AuthRepository {
     await _firebaseAuth.signOut();
   }
 
+  /// Send password reset email
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
+  /// Change password (requires current password for reauthentication)
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null || user.email == null) {
+        throw Exception('No user currently signed in');
+      }
+
+      // Reauthenticate user with current password
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+
+      await user.reauthenticateWithCredential(credential);
+
+      // Update password
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw _handleAuthException(e);
+    }
+  }
+
   /// Get user data from Firestore
   Future<UserModel> getUserData(String userId) async {
     try {
@@ -527,7 +562,7 @@ class AuthRepository {
       case 'invalid-email':
         return 'Invalid email address';
       case 'user-not-found':
-        return 'No user found with this email';
+        return 'No account found with this email. Please check your email or sign up.';
       case 'wrong-password':
         return 'Incorrect password';
       case 'user-disabled':
@@ -536,6 +571,12 @@ class AuthRepository {
         return 'Too many attempts. Please try again later';
       case 'operation-not-allowed':
         return 'Email/password sign in is not enabled';
+      case 'invalid-action-code':
+        return 'The password reset link is invalid or has expired';
+      case 'expired-action-code':
+        return 'The password reset link has expired. Please request a new one.';
+      case 'missing-email':
+        return 'Please enter an email address';
       default:
         return 'Authentication error: ${e.message ?? 'Unknown error'}';
     }

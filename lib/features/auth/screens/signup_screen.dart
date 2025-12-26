@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heroicons/heroicons.dart';
@@ -8,6 +9,7 @@ import 'package:literature/core/widgets/shimmer_loading.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_event.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});

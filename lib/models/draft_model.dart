@@ -25,6 +25,7 @@ class DraftModel extends Equatable {
 
   factory DraftModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+    final now = DateTime.now();
     return DraftModel(
       id: doc.id,
       authorId: data['authorId'] ?? '',
@@ -32,8 +33,12 @@ class DraftModel extends Equatable {
       content: data['content'] ?? '',
       category: data['category'] ?? 'other',
       backgroundImageUrl: data['backgroundImageUrl'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(),
-      updatedAt: (data['updatedAt'] as Timestamp).toDate(),
+      createdAt: data['createdAt'] != null
+          ? (data['createdAt'] as Timestamp).toDate()
+          : now,
+      updatedAt: data['updatedAt'] != null
+          ? (data['updatedAt'] as Timestamp).toDate()
+          : now,
     );
   }
 

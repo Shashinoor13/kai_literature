@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:heroicons/heroicons.dart';
-import 'package:literature/core/constants/colors.dart';
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/models/report_reason.dart';
 
-/// Dialog for reporting a post with various reasons
+/// Bottom sheet for reporting a post with various reasons
 class ReportPostDialog extends StatefulWidget {
   final Function(ReportReason reason, String? details) onReport;
 
@@ -47,125 +46,173 @@ class _ReportPostDialogState extends State<ReportPostDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: AppColors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    return Container(
+      height: screenHeight * 0.85,
+      decoration: const BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 500),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.lg),
-              child: Row(
-                children: [
-                  const HeroIcon(
-                    HeroIcons.flag,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              margin: const EdgeInsets.symmetric(vertical: AppSizes.sm),
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Header
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.md,
+              vertical: AppSizes.sm,
+            ),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Colors.white12)),
+            ),
+            child: Row(
+              children: [
+                const HeroIcon(
+                  HeroIcons.flag,
+                  style: HeroIconStyle.outline,
+                  size: 24,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: AppSizes.sm),
+                const Expanded(
+                  child: Text(
+                    'Report Post',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: const HeroIcon(
+                    HeroIcons.xMark,
                     style: HeroIconStyle.outline,
                     size: 24,
+                    color: Colors.white,
                   ),
-                  const SizedBox(width: AppSizes.sm),
-                  const Expanded(
-                    child: Text(
-                      'Report Post',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                ),
+              ],
+            ),
+          ),
+
+          // Reason selection
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(AppSizes.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Why are you reporting this post?',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white70,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.md),
+
+                  // Reason options
+                  ...ReportReason.values.map((reason) {
+                    return _ReasonOption(
+                      reason: reason,
+                      isSelected: _selectedReason == reason,
+                      onTap: () {
+                        setState(() {
+                          _selectedReason = reason;
+                        });
+                      },
+                    );
+                  }),
+
+                  const SizedBox(height: AppSizes.lg),
+
+                  // Additional details (optional)
+                  const Text(
+                    'Additional details (optional)',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white70,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: AppSizes.sm),
+                  TextField(
+                    controller: _detailsController,
+                    maxLines: 3,
+                    maxLength: 500,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                      height: 1.6,
+                    ),
+                    decoration: InputDecoration(
+                      hintText: 'Provide more context about this report...',
+                      hintStyle: const TextStyle(
+                        color: Colors.white54,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      filled: true,
+                      fillColor: Colors.white12,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSm,
+                        ),
+                        borderSide: const BorderSide(
+                          color: Colors.white24,
+                          width: 1,
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                          AppSizes.radiusSm,
+                        ),
+                        borderSide: const BorderSide(
+                          color: Colors.white,
+                          width: 1,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: AppSizes.sm,
+                        horizontal: AppSizes.md,
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const HeroIcon(
-                      HeroIcons.xMark,
-                      style: HeroIconStyle.outline,
-                      size: 20,
-                    ),
-                    onPressed: () => Navigator.of(context).pop(),
                   ),
                 ],
               ),
             ),
+          ),
 
-            const Divider(height: 1),
-
-            // Reason selection
-            Flexible(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSizes.lg),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Why are you reporting this post?',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.gray700,
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.md),
-
-                    // Reason options
-                    ...ReportReason.values.map((reason) {
-                      return _ReasonOption(
-                        reason: reason,
-                        isSelected: _selectedReason == reason,
-                        onTap: () {
-                          setState(() {
-                            _selectedReason = reason;
-                          });
-                        },
-                      );
-                    }),
-
-                    const SizedBox(height: AppSizes.lg),
-
-                    // Additional details (optional)
-                    const Text(
-                      'Additional details (optional)',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.gray700,
-                      ),
-                    ),
-                    const SizedBox(height: AppSizes.sm),
-                    TextField(
-                      controller: _detailsController,
-                      maxLines: 3,
-                      maxLength: 500,
-                      decoration: InputDecoration(
-                        hintText: 'Provide more context about this report...',
-                        hintStyle: const TextStyle(color: AppColors.gray500),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusSm,
-                          ),
-                          borderSide: const BorderSide(color: AppColors.gray300),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.radiusSm,
-                          ),
-                          borderSide: const BorderSide(color: AppColors.black),
-                        ),
-                        contentPadding: const EdgeInsets.all(AppSizes.md),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+          // Actions
+          Container(
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Colors.white12)),
             ),
-
-            const Divider(height: 1),
-
-            // Actions
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.lg),
+            padding: const EdgeInsets.all(AppSizes.md),
+            child: SafeArea(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -173,6 +220,14 @@ class _ReportPostDialogState extends State<ReportPostDialog> {
                     onPressed: _isSubmitting
                         ? null
                         : () => Navigator.of(context).pop(),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      disabledForegroundColor: Colors.white38,
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
                     child: const Text('Cancel'),
                   ),
                   const SizedBox(width: AppSizes.sm),
@@ -181,16 +236,22 @@ class _ReportPostDialogState extends State<ReportPostDialog> {
                         ? null
                         : _submitReport,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.black,
-                      foregroundColor: AppColors.white,
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      disabledBackgroundColor: Colors.white24,
+                      disabledForegroundColor: Colors.white38,
+                      minimumSize: const Size(100, AppSizes.buttonHeight),
                       padding: const EdgeInsets.symmetric(
                         horizontal: AppSizes.lg,
-                        vertical: AppSizes.md,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(
                           AppSizes.radiusSm,
                         ),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                     child: _isSubmitting
@@ -200,7 +261,7 @@ class _ReportPostDialogState extends State<ReportPostDialog> {
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
                               valueColor:
-                                  AlwaysStoppedAnimation<Color>(AppColors.white),
+                                  AlwaysStoppedAnimation<Color>(Colors.black),
                             ),
                           )
                         : const Text('Submit Report'),
@@ -208,8 +269,8 @@ class _ReportPostDialogState extends State<ReportPostDialog> {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -229,38 +290,45 @@ class _ReasonOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(AppSizes.radiusSm),
       child: Container(
         padding: const EdgeInsets.all(AppSizes.md),
         margin: const EdgeInsets.only(bottom: AppSizes.sm),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected ? AppColors.black : AppColors.gray300,
-            width: isSelected ? 2 : 1,
+            color: isSelected ? Colors.white : Colors.white24,
+            width: 1,
           ),
           borderRadius: BorderRadius.circular(AppSizes.radiusSm),
-          color: isSelected ? AppColors.gray100 : AppColors.white,
+          color: isSelected ? Colors.white12 : Colors.transparent,
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Radio button indicator
             Container(
               width: 20,
               height: 20,
+              margin: const EdgeInsets.only(top: 2),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? AppColors.black : AppColors.gray300,
+                  color: isSelected ? Colors.white : Colors.white38,
                   width: 2,
                 ),
-                color: isSelected ? AppColors.black : AppColors.white,
+                color: Colors.transparent,
               ),
               child: isSelected
-                  ? const Icon(
-                      Icons.check,
-                      size: 12,
-                      color: AppColors.white,
+                  ? Center(
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white,
+                        ),
+                      ),
                     )
                   : null,
             ),
@@ -272,17 +340,20 @@ class _ReasonOption extends StatelessWidget {
                   Text(
                     reason.displayName,
                     style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                      color: AppColors.black,
+                      fontSize: 16,
+                      fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
+                      color: Colors.white,
+                      height: 1.6,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     reason.description,
                     style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.gray500,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white70,
+                      height: 1.5,
                     ),
                   ),
                 ],

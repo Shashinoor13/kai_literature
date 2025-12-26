@@ -81,7 +81,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           value: _postBloc!,
           child: Scaffold(
             appBar: AppBar(
-              title: const Text('Profile'),
+              title: const Text(''),
               actions: [
                 IconButton(
                   icon: const HeroIcon(HeroIcons.cog6Tooth),
@@ -538,10 +538,7 @@ class _PostListItem extends StatefulWidget {
   final PostModel post;
   final bool isOwnPost;
 
-  const _PostListItem({
-    required this.post,
-    this.isOwnPost = false,
-  });
+  const _PostListItem({required this.post, this.isOwnPost = false});
 
   @override
   State<_PostListItem> createState() => _PostListItemState();
@@ -619,10 +616,7 @@ class _PostListItemState extends State<_PostListItem> {
               },
             ),
             ListTile(
-              leading: const HeroIcon(
-                HeroIcons.trash,
-                color: Colors.red,
-              ),
+              leading: const HeroIcon(HeroIcons.trash, color: Colors.red),
               title: const Text(
                 'Delete Post',
                 style: TextStyle(color: Colors.red),
@@ -677,9 +671,9 @@ class _PostListItemState extends State<_PostListItem> {
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting post: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error deleting post: $e')));
         }
       }
     }
@@ -692,9 +686,7 @@ class _PostListItemState extends State<_PostListItem> {
       child: Card(
         margin: const EdgeInsets.only(bottom: AppSizes.md),
         elevation: 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(AppSizes.md),
           child: Column(
@@ -736,10 +728,7 @@ class _PostListItemState extends State<_PostListItem> {
                   const Spacer(),
                   Text(
                     _formatDate(widget.post.createdAt),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                   ),
                   if (widget.isOwnPost) ...[
                     const SizedBox(width: AppSizes.xs),
@@ -785,10 +774,7 @@ class _PostListItemState extends State<_PostListItem> {
               const SizedBox(height: AppSizes.md),
 
               // Divider
-              Divider(
-                height: 1,
-                color: Colors.grey[300],
-              ),
+              Divider(height: 1, color: Colors.grey[300]),
               const SizedBox(height: AppSizes.sm),
 
               // Interaction Stats

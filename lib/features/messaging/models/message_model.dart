@@ -28,7 +28,9 @@ class MessageModel extends Equatable {
       senderId: data['senderId'] ?? '',
       content: data['content'] ?? '',
       isRead: data['isRead'] ?? false,
-      timestamp: (data['timestamp'] as Timestamp).toDate(),
+      timestamp: data['timestamp'] != null
+          ? (data['timestamp'] as Timestamp).toDate()
+          : DateTime.now(),
       replyToStoryId: data['replyToStoryId'],
     );
   }
