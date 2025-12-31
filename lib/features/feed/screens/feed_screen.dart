@@ -114,9 +114,7 @@ class _FeedScreenState extends State<FeedScreen> {
                 builder: (context, state) {
                   if (state is FeedLoading) {
                     return const Center(
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                      ),
+                      child: CircularProgressIndicator(color: Colors.white),
                     );
                   }
 
@@ -140,7 +138,6 @@ class _FeedScreenState extends State<FeedScreen> {
                           const SizedBox(height: AppSizes.lg),
                           ElevatedButton(
                             onPressed: () {
-                              // print(state.message);
                               _feedBloc.add(const RefreshFeedPosts());
                             },
                             child: const Text('Retry'),
@@ -177,25 +174,38 @@ class _FeedScreenState extends State<FeedScreen> {
                       );
                     }
 
-                    return RefreshIndicator(
-                      onRefresh: () async {
-                        _feedBloc.add(
-                          RefreshFeedPosts(
-                            feedType: _feedBloc.currentFeedType,
-                            contentFilter: _feedBloc.currentContentFilter,
+                    return LayoutBuilder(
+                      builder: (context, constraints) {
+                        final topPadding = _showStoryBar ? 200.0 : 20.0;
+                        return RefreshIndicator(
+                          onRefresh: () async {
+                            _feedBloc.add(
+                              RefreshFeedPosts(
+                                feedType: _feedBloc.currentFeedType,
+                                contentFilter: _feedBloc.currentContentFilter,
+                              ),
+                            );
+                            await Future.delayed(
+                              const Duration(milliseconds: 500),
+                            );
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                            margin: EdgeInsets.only(top: topPadding),
+                            height: constraints.maxHeight - topPadding,
+                            child: PageView.builder(
+                              controller: _pageController,
+                              scrollDirection: Axis.vertical,
+                              itemCount: state.posts.length,
+                              itemBuilder: (context, index) {
+                                final post = state.posts[index];
+                                return FeedPostCard(post: post);
+                              },
+                            ),
                           ),
                         );
-                        await Future.delayed(const Duration(milliseconds: 500));
                       },
-                      child: PageView.builder(
-                        controller: _pageController,
-                        scrollDirection: Axis.vertical,
-                        itemCount: state.posts.length,
-                        itemBuilder: (context, index) {
-                          final post = state.posts[index];
-                          return FeedPostCard(post: post);
-                        },
-                      ),
                     );
                   }
 

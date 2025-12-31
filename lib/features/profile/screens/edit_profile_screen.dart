@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_event.dart';
@@ -20,6 +24,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _bioController = TextEditingController();
+  final _imagePicker = ImagePicker();
+  File? _selectedImage;
+  bool _isUploading = false;
 
   @override
   void initState() {
@@ -38,15 +45,91 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.dispose();
   }
 
-  void _handleSave() {
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 80,
+        maxWidth: 800,
+        maxHeight: 800,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error picking image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<String?> _uploadProfileImage(String userId) async {
+    if (_selectedImage == null) return null;
+
+    try {
+      setState(() {
+        _isUploading = true;
+      });
+
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profile_images')
+          .child('$userId.jpg');
+
+      await storageRef.putFile(_selectedImage!);
+      final downloadUrl = await storageRef.getDownloadURL();
+
+      setState(() {
+        _isUploading = false;
+      });
+
+      return downloadUrl;
+    } catch (e) {
+      setState(() {
+        _isUploading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error uploading image: $e')),
+        );
+      }
+      return null;
+    }
+  }
+
+  Future<void> _handleSave() async {
     if (_formKey.currentState!.validate()) {
+      final authState = context.read<AuthBloc>().state;
+      if (authState is! Authenticated) return;
+
+      // Upload image if one was selected
+      String? profileImageUrl;
+      if (_selectedImage != null) {
+        profileImageUrl = await _uploadProfileImage(authState.user.id);
+        if (profileImageUrl == null) {
+          // Upload failed, don't proceed with save
+          return;
+        }
+      }
+
+      if (!mounted) return;
+
       context.read<AuthBloc>().add(
         UpdateProfileRequested(
           username: _usernameController.text.trim(),
           bio: _bioController.text.trim(),
+          profileImageUrl: profileImageUrl,
         ),
       );
-      context.pop();
+
+      if (mounted) {
+        context.pop();
+      }
     }
   }
 
@@ -72,29 +155,55 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Profile Picture placeholder
+                  // Profile Picture
                   Center(
                     child: Stack(
                       children: [
                         CircleAvatar(
                           radius: 50,
-                          child: Text(
-                            state.user.username[0].toUpperCase(),
-                            style: Theme.of(context).textTheme.displayLarge,
-                          ),
+                          backgroundColor: Colors.grey[300],
+                          backgroundImage: _selectedImage != null
+                              ? FileImage(_selectedImage!)
+                              : (state.user.profileImageUrl.isNotEmpty
+                                  ? CachedNetworkImageProvider(
+                                      state.user.profileImageUrl,
+                                    )
+                                  : null),
+                          child: _selectedImage == null &&
+                                  state.user.profileImageUrl.isEmpty
+                              ? Text(
+                                  state.user.username[0].toUpperCase(),
+                                  style:
+                                      Theme.of(context).textTheme.displayLarge,
+                                )
+                              : null,
                         ),
+                        if (_isUploading)
+                          Positioned.fill(
+                            child: CircleAvatar(
+                              radius: 50,
+                              backgroundColor:
+                                  Colors.black.withValues(alpha: 0.5),
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
                         Positioned(
                           bottom: 0,
                           right: 0,
-                          child: CircleAvatar(
-                            radius: 18,
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            child: const HeroIcon(
-                              HeroIcons.camera,
-                              style: HeroIconStyle.solid,
-                              size: 20,
+                          child: GestureDetector(
+                            onTap: _isUploading ? null : _pickImage,
+                            child: CircleAvatar(
+                              radius: 18,
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              child: const HeroIcon(
+                                HeroIcons.camera,
+                                style: HeroIconStyle.solid,
+                                size: 20,
+                              ),
                             ),
                           ),
                         ),

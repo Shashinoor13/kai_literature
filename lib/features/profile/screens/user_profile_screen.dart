@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
+import 'package:heroicons/heroicons.dart';
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/features/post/bloc/post_bloc.dart';
 import 'package:literature/features/post/bloc/post_event.dart';
@@ -26,7 +29,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   UserModel? _user;
   bool _isLoading = true;
   bool _isBlocked = false;
-  bool _isBlockActionLoading = false;
   String? _error;
 
   @override
@@ -112,8 +114,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
     if (confirmed != true) return;
 
-    setState(() => _isBlockActionLoading = true);
-
     try {
 
       if (_isBlocked) {
@@ -136,7 +136,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
       setState(() {
         _isBlocked = !_isBlocked;
-        _isBlockActionLoading = false;
       });
 
       // Show success message
@@ -153,8 +152,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       if (!mounted) return;
 
       final scaffoldMessenger = ScaffoldMessenger.of(context);
-
-      setState(() => _isBlockActionLoading = false);
 
       scaffoldMessenger.showSnackBar(
         SnackBar(
@@ -199,21 +196,33 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         appBar: AppBar(
           title: Text('@${_user!.username}'),
           actions: [
-            if (_isBlockActionLoading)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              )
-            else
-              IconButton(
-                icon: Icon(_isBlocked ? Icons.block : Icons.block_outlined),
-                tooltip: _isBlocked ? 'Unblock' : 'Block',
-                onPressed: _toggleBlock,
+            PopupMenuButton<String>(
+              icon: const HeroIcon(
+                HeroIcons.ellipsisVertical,
+                style: HeroIconStyle.outline,
               ),
+              onSelected: (value) {
+                if (value == 'block') {
+                  _toggleBlock();
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                PopupMenuItem<String>(
+                  value: 'block',
+                  child: Row(
+                    children: [
+                      HeroIcon(
+                        _isBlocked ? HeroIcons.lockOpen : HeroIcons.noSymbol,
+                        style: HeroIconStyle.outline,
+                        size: 20,
+                      ),
+                      const SizedBox(width: AppSizes.sm),
+                      Text(_isBlocked ? 'Unblock User' : 'Block User'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
         body: RefreshIndicator(
@@ -225,7 +234,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 child: _ProfileHeader(user: _user!),
               ),
 
-              // Posts List
+              // Posts Grid
               BlocBuilder<PostBloc, PostState>(
                 builder: (context, postState) {
                   if (postState is PostsLoaded) {
@@ -233,24 +242,45 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                       return const SliverFillRemaining(
                         hasScrollBody: false,
                         child: Center(
-                          child: Text(
-                            'No posts yet',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey,
-                            ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              HeroIcon(
+                                HeroIcons.documentText,
+                                size: 64,
+                                color: Colors.grey,
+                                style: HeroIconStyle.outline,
+                              ),
+                              SizedBox(height: AppSizes.md),
+                              Text(
+                                'No posts yet',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );
                     }
 
                     return SliverPadding(
-                      padding: const EdgeInsets.all(AppSizes.screenPadding),
-                      sliver: SliverList(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.sm,
+                        vertical: AppSizes.xs,
+                      ),
+                      sliver: SliverGrid(
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 3,
+                          crossAxisSpacing: 2,
+                          mainAxisSpacing: 2,
+                          childAspectRatio: 1,
+                        ),
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
                             final post = postState.posts[index];
-                            return _PostListItem(post: post);
+                            return _PostGridItem(post: post);
                           },
                           childCount: postState.posts.length,
                         ),
@@ -355,12 +385,33 @@ class _ProfileHeaderState extends State<_ProfileHeader> {
               // Profile Picture and Stats Row
               Row(
                 children: [
-                  // Profile Picture
-                  CircleAvatar(
-                    radius: 40,
-                    child: Text(
-                      widget.user.username[0].toUpperCase(),
-                      style: const TextStyle(fontSize: 28),
+                  // Profile Picture with border
+                  Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.grey[300]!,
+                        width: 2,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 42,
+                      backgroundColor: Colors.grey[200],
+                      backgroundImage: widget.user.profileImageUrl.isNotEmpty
+                          ? CachedNetworkImageProvider(
+                              widget.user.profileImageUrl,
+                            )
+                          : null,
+                      child: widget.user.profileImageUrl.isEmpty
+                          ? Text(
+                              widget.user.username[0].toUpperCase(),
+                              style: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black54,
+                              ),
+                            )
+                          : null,
                     ),
                   ),
                   const SizedBox(width: AppSizes.lg),
@@ -476,149 +527,140 @@ class _StatItem extends StatelessWidget {
   }
 }
 
-/// Post List Item Widget
-class _PostListItem extends StatelessWidget {
+/// Post Grid Item Widget - Instagram-style grid
+class _PostGridItem extends StatelessWidget {
   final PostModel post;
 
-  const _PostListItem({required this.post});
+  const _PostGridItem({required this.post});
 
-  String _getCategoryIcon(String category) {
+  HeroIcons _getCategoryIcon(String category) {
     switch (category.toLowerCase()) {
+      case 'library':
+        return HeroIcons.buildingLibrary;
       case 'poem':
-        return '📝';
+        return HeroIcons.bookOpen;
       case 'story':
-        return '📖';
+        return HeroIcons.documentText;
+      case 'book':
+        return HeroIcons.bookmarkSquare;
       case 'joke':
-        return '😄';
+        return HeroIcons.faceSmile;
+      case 'reflection':
+        return HeroIcons.lightBulb;
+      case 'research':
+        return HeroIcons.academicCap;
+      case 'novel':
+        return HeroIcons.newspaper;
       default:
-        return '📄';
-    }
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-
-    if (difference.inDays > 30) {
-      return '${date.month}/${date.day}/${date.year}';
-    } else if (difference.inDays > 0) {
-      return '${difference.inDays}d ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}h ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}m ago';
-    } else {
-      return 'Just now';
+        return HeroIcons.document;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSizes.md),
-      child: Padding(
-        padding: const EdgeInsets.all(AppSizes.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return GestureDetector(
+      onTap: () => context.push('/post/${post.id}'),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[300]!, width: 0.5),
+        ),
+        child: Stack(
+          fit: StackFit.expand,
           children: [
-            // Header: Category and Date
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      _getCategoryIcon(post.category),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(width: AppSizes.xs),
-                    Text(
-                      post.category.toUpperCase(),
+            // Content background
+            Container(
+              color: Colors.grey[100],
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Category icon
+                  HeroIcon(
+                    _getCategoryIcon(post.category),
+                    size: 20,
+                    color: Colors.black54,
+                    style: HeroIconStyle.outline,
+                  ),
+                  const SizedBox(height: 4),
+                  // Content preview
+                  Expanded(
+                    child: Text(
+                      post.content,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
+                        height: 1.3,
+                        color: Colors.black87,
+                      ),
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Interaction overlay (bottom)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.6),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const HeroIcon(
+                      HeroIcons.heart,
+                      size: 12,
+                      color: Colors.white,
+                      style: HeroIconStyle.solid,
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      '${post.likesCount}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const HeroIcon(
+                      HeroIcons.chatBubbleLeft,
+                      size: 12,
+                      color: Colors.white,
+                      style: HeroIconStyle.solid,
+                    ),
+                    const SizedBox(width: 2),
+                    Text(
+                      '${post.commentsCount}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: Colors.white,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                 ),
-                Text(
-                  _formatDate(post.createdAt),
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSizes.sm),
-
-            // Title
-            if (post.title.isNotEmpty) ...[
-              Text(
-                post.title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: AppSizes.xs),
-            ],
-
-            // Content Preview
-            Text(
-              post.content,
-              style: Theme.of(context).textTheme.bodyMedium,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: AppSizes.sm),
-
-            // Interaction Stats
-            Row(
-              children: [
-                _InteractionStat(
-                  icon: Icons.favorite_outline,
-                  count: post.likesCount,
-                ),
-                const SizedBox(width: AppSizes.md),
-                _InteractionStat(
-                  icon: Icons.comment_outlined,
-                  count: post.commentsCount,
-                ),
-                const SizedBox(width: AppSizes.md),
-                _InteractionStat(
-                  icon: Icons.share_outlined,
-                  count: post.sharesCount,
-                ),
-              ],
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-/// Interaction Stat Widget
-class _InteractionStat extends StatelessWidget {
-  final IconData icon;
-  final int count;
-
-  const _InteractionStat({
-    required this.icon,
-    required this.count,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: Colors.grey),
-        const SizedBox(width: 4),
-        Text(
-          '$count',
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
-        ),
-      ],
     );
   }
 }

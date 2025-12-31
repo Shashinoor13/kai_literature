@@ -76,6 +76,28 @@ class SettingsScreen extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.only(top: AppSizes.lg, bottom: AppSizes.sm),
             child: Text(
+              'App Info',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+          ListTile(
+            leading: const HeroIcon(
+              HeroIcons.informationCircle,
+              style: HeroIconStyle.outline,
+            ),
+            title: const Text('About Literature'),
+            trailing: const HeroIcon(
+              HeroIcons.chevronRight,
+              style: HeroIconStyle.outline,
+              size: 20,
+            ),
+            onTap: () => context.push('/about'),
+            contentPadding: EdgeInsets.zero,
+          ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.only(top: AppSizes.lg, bottom: AppSizes.sm),
+            child: Text(
               'Privacy',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),

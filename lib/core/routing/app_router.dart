@@ -11,6 +11,7 @@ import 'package:literature/features/notifications/screens/notifications_screen.d
 import 'package:literature/features/profile/screens/profile_screen.dart';
 import 'package:literature/features/profile/screens/edit_profile_screen.dart';
 import 'package:literature/features/profile/screens/settings_screen.dart';
+import 'package:literature/features/profile/screens/about_screen.dart';
 import 'package:literature/features/profile/screens/user_profile_screen.dart';
 import 'package:literature/features/profile/screens/blocked_users_screen.dart';
 import 'package:literature/features/messaging/screens/chat_list_screen.dart';
@@ -151,6 +152,12 @@ class AppRouter {
       GoRoute(
         path: '/settings',
         builder: (context, state) => const SettingsScreen(),
+      ),
+
+      // About route
+      GoRoute(
+        path: '/about',
+        builder: (context, state) => const AboutScreen(),
       ),
 
       // User Profile route

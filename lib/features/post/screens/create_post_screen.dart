@@ -29,7 +29,16 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   File? _backgroundImage;
   final _imagePicker = ImagePicker();
 
-  final List<String> _categories = ['poem', 'story', 'joke', 'other'];
+  final List<String> _categories = [
+    'poem',
+    'story',
+    'book',
+    'joke',
+    'reflection',
+    'research',
+    'novel',
+    'other'
+  ];
 
   bool get _isEditing => widget.postToEdit != null;
 

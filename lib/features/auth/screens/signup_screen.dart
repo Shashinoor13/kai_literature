@@ -27,6 +27,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
+  // Age verification and consent
+  DateTime? _dateOfBirth;
+  bool _acceptedTerms = false;
+  bool _dataProcessingConsent = false;
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -36,13 +41,89 @@ class _SignUpScreenState extends State<SignUpScreen> {
     super.dispose();
   }
 
+  Future<void> _selectDateOfBirth() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime(2005, 1, 1), // Default to 2005 (18+ years ago)
+      firstDate: DateTime(1920),
+      lastDate: DateTime.now(),
+      helpText: 'Select your date of birth',
+    );
+
+    if (picked != null) {
+      setState(() {
+        _dateOfBirth = picked;
+      });
+    }
+  }
+
+  Future<void> _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not open $url')),
+        );
+      }
+    }
+  }
+
+  int? _calculateAge() {
+    if (_dateOfBirth == null) return null;
+    final now = DateTime.now();
+    int age = now.year - _dateOfBirth!.year;
+    if (now.month < _dateOfBirth!.month ||
+        (now.month == _dateOfBirth!.month && now.day < _dateOfBirth!.day)) {
+      age--;
+    }
+    return age;
+  }
+
   void _handleSignUp() {
+    // Validate age
+    final age = _calculateAge();
+    if (age == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select your date of birth')),
+      );
+      return;
+    }
+
+    if (age < 13) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You must be at least 13 years old to use Literature'),
+        ),
+      );
+      return;
+    }
+
+    // Validate consents
+    if (!_acceptedTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please accept the Terms of Service and Privacy Policy'),
+        ),
+      );
+      return;
+    }
+
+    if (!_dataProcessingConsent) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please consent to data processing to continue'),
+        ),
+      );
+      return;
+    }
+
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
             SignUpRequested(
               email: _emailController.text.trim(),
               password: _passwordController.text,
               username: _usernameController.text.trim(),
+              dateOfBirth: _dateOfBirth,
             ),
           );
     }
@@ -171,8 +252,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         if (value == null || value.isEmpty) {
                           return 'Password is required';
                         }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
+                        if (value.length < 8) {
+                          return 'Password must be at least 8 characters';
+                        }
+                        if (!value.contains(RegExp(r'[A-Z]'))) {
+                          return 'Password must contain at least one uppercase letter';
+                        }
+                        if (!value.contains(RegExp(r'[0-9]'))) {
+                          return 'Password must contain at least one number';
                         }
                         return null;
                       },
@@ -209,6 +296,116 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         }
                         return null;
                       },
+                    ),
+                    const SizedBox(height: AppSizes.md),
+
+                    // Date of Birth field
+                    InkWell(
+                      onTap: _selectDateOfBirth,
+                      child: InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Date of Birth',
+                          hintText: 'Select your date of birth',
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              _dateOfBirth == null
+                                  ? 'Tap to select'
+                                  : '${_dateOfBirth!.day}/${_dateOfBirth!.month}/${_dateOfBirth!.year}',
+                              style: TextStyle(
+                                color: _dateOfBirth == null
+                                    ? AppColors.gray500
+                                    : AppColors.white,
+                              ),
+                            ),
+                            const HeroIcon(
+                              HeroIcons.calendar,
+                              size: 20,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSizes.lg),
+
+                    // Terms and Privacy consent
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: _acceptedTerms,
+                          onChanged: (value) {
+                            setState(() {
+                              _acceptedTerms = value ?? false;
+                            });
+                          },
+                          activeColor: AppColors.white,
+                          checkColor: AppColors.black,
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 12.0),
+                            child: RichText(
+                              text: TextSpan(
+                                text: 'I agree to the ',
+                                style: Theme.of(context).textTheme.bodySmall,
+                                children: [
+                                  TextSpan(
+                                    text: 'Terms of Service',
+                                    style: const TextStyle(
+                                      decoration: TextDecoration.underline,
+                                      color: AppColors.white,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () => _launchURL(
+                                          'https://thekaiverse.com/terms'),
+                                  ),
+                                  const TextSpan(text: ' and '),
+                                  TextSpan(
+                                    text: 'Privacy Policy',
+                                    style: const TextStyle(
+                                      decoration: TextDecoration.underline,
+                                      color: AppColors.white,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () => _launchURL(
+                                          'https://thekaiverse.com/privacy'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSizes.sm),
+
+                    // Data processing consent
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Checkbox(
+                          value: _dataProcessingConsent,
+                          onChanged: (value) {
+                            setState(() {
+                              _dataProcessingConsent = value ?? false;
+                            });
+                          },
+                          activeColor: AppColors.white,
+                          checkColor: AppColors.black,
+                        ),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(top: 12.0),
+                            child: Text(
+                              'I consent to Literature collecting and processing my email, username, posts, and profile information as described in the Privacy Policy',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: AppSizes.lg),
 

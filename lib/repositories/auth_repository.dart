@@ -26,6 +26,7 @@ class AuthRepository {
     required String email,
     required String password,
     required String username,
+    DateTime? dateOfBirth,
   }) async {
     try {
       // Check if username is already taken
@@ -52,6 +53,7 @@ class AuthRepository {
         id: userId,
         username: username,
         email: email,
+        dateOfBirth: dateOfBirth,
         createdAt: DateTime.now(),
       );
 
@@ -178,6 +180,7 @@ class AuthRepository {
 
   /// Delete user account
   /// Deletes user from both Firebase Auth and Firestore
+  /// Cascade deletes all user content (posts, comments, stories)
   Future<void> deleteAccount(String userId) async {
     final user = _firebaseAuth.currentUser;
     if (user == null) {
@@ -185,28 +188,75 @@ class AuthRepository {
     }
 
     try {
-      // Delete Firebase Auth user FIRST
-      // If this fails (e.g., requires-recent-login), we don't delete Firestore data
+      // Step 1: Delete all user content BEFORE deleting auth
+      // This prevents orphaned content in the database
+
+      // Delete posts
+      final postsSnapshot = await _firestore
+          .collection('posts')
+          .where('authorId', isEqualTo: userId)
+          .get();
+
+      for (final doc in postsSnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // Delete comments
+      final commentsSnapshot = await _firestore
+          .collection('comments')
+          .where('authorId', isEqualTo: userId)
+          .get();
+
+      for (final doc in commentsSnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // Delete stories
+      final storiesSnapshot = await _firestore
+          .collection('stories')
+          .where('authorId', isEqualTo: userId)
+          .get();
+
+      for (final doc in storiesSnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // Delete drafts
+      final draftsSnapshot = await _firestore
+          .collection('drafts')
+          .where('authorId', isEqualTo: userId)
+          .get();
+
+      for (final doc in draftsSnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // Delete reports made by this user
+      final reportsSnapshot = await _firestore
+          .collection('reports')
+          .where('reporterId', isEqualTo: userId)
+          .get();
+
+      for (final doc in reportsSnapshot.docs) {
+        await doc.reference.delete();
+      }
+
+      // Step 2: Delete Firebase Auth user
       await user.delete();
+
+      // Step 3: Delete Firestore user document
+      await _firestore.collection('users').doc(userId).delete();
+
+      // Step 4: Sign out to clear any cached state
+      await signOut();
     } on FirebaseAuthException catch (e) {
       if (e.code == 'requires-recent-login') {
         throw Exception('Please sign in again to delete your account');
       }
-      throw Exception('Failed to delete authentication: ${e.message}');
-    }
-
-    try {
-      // Delete Firestore user document
-      // Even if this fails, auth user is already deleted
-      await _firestore.collection('users').doc(userId).delete();
+      throw Exception('Failed to delete account: ${e.message}');
     } catch (e) {
-      // Log error but don't throw - auth deletion already succeeded
-      // In production, you'd log this to error tracking service
-      throw Exception('Authentication deleted but failed to clean up user data: $e');
+      throw Exception('Failed to delete account: $e');
     }
-
-    // Sign out to clear any cached state
-    await signOut();
   }
 
   /// Block a user

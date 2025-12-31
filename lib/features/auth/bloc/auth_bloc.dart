@@ -89,6 +89,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         email: event.email,
         password: event.password,
         username: event.username,
+        dateOfBirth: event.dateOfBirth,
       );
 
       final userData = await _authRepository.getUserData(userId);

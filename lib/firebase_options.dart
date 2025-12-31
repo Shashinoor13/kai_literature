@@ -65,10 +65,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBHoa_dWskkVeFEiQQbhwYY0UdA6Lz45Z0',
-    appId: '1:353302887560:ios:b6fd631b286f7c8a50733d',
+    appId: '1:353302887560:ios:86b367f8897ab7d150733d',
     messagingSenderId: '353302887560',
     projectId: 'ram-literature-v2',
     storageBucket: 'ram-literature-v2.firebasestorage.app',
-    iosBundleId: 'com.literature.literature',
+    iosBundleId: 'com.kaiverse.literature',
   );
+
 }

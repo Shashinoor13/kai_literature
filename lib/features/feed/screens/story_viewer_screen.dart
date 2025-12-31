@@ -264,21 +264,23 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
               child: Stack(
                 children: [
                   // Story Content
-                  Center(
+                  Align(
+                    alignment: Alignment.centerLeft,
                     child: Padding(
                       padding: const EdgeInsets.all(AppSizes.xl),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (currentStory.title.isNotEmpty) ...[
                             Text(
                               currentStory.title,
                               style: TextStyle(
                                 color: textColor,
-                                fontSize: 28,
+                                fontSize: 20,
                                 fontWeight: FontWeight.bold,
                               ),
-                              textAlign: TextAlign.center,
+                              textAlign: TextAlign.left,
                             ),
                             const SizedBox(height: AppSizes.lg),
                           ],
@@ -286,10 +288,10 @@ class _StoryViewerScreenState extends State<StoryViewerScreen> {
                             currentStory.textContent,
                             style: TextStyle(
                               color: textColor,
-                              fontSize: 22,
+                              fontSize: 16,
                               height: 1.6,
                             ),
-                            textAlign: TextAlign.center,
+                            textAlign: TextAlign.left,
                           ),
                         ],
                       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
@@ -454,10 +455,16 @@ class _ProfileHeader extends StatelessWidget {
                   // Profile Picture (smaller)
                   CircleAvatar(
                     radius: 40,
-                    child: Text(
-                      user.username[0].toUpperCase(),
-                      style: const TextStyle(fontSize: 28),
-                    ),
+                    backgroundColor: Colors.grey[300],
+                    backgroundImage: user.profileImageUrl.isNotEmpty
+                        ? CachedNetworkImageProvider(user.profileImageUrl)
+                        : null,
+                    child: user.profileImageUrl.isEmpty
+                        ? Text(
+                            user.username[0].toUpperCase(),
+                            style: const TextStyle(fontSize: 28),
+                          )
+                        : null,
                   ),
                   const SizedBox(width: AppSizes.lg),
 

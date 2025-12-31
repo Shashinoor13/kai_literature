@@ -54,6 +54,8 @@ class _CommentScreenState extends State<CommentScreen> {
         postId: widget.post.id,
         authorId: authState.user.id,
         content: content,
+        username: authState.user.username,
+        profileImageUrl: authState.user.profileImageUrl,
       );
 
       if (!mounted) return;

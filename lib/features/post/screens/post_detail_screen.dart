@@ -5,6 +5,7 @@ import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/core/utils/format_utils.dart';
 import 'package:literature/core/utils/category_utils.dart';
 import 'package:literature/core/widgets/shimmer_loading.dart';
+import 'package:literature/core/services/share_service.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
 import 'package:literature/models/post_model.dart';
@@ -121,7 +122,12 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
 
       // Make API call
       if (_interactionState!.isLiked) {
-        await postRepo.likePost(userId: authState.user.id, postId: _post!.id);
+        await postRepo.likePost(
+          userId: authState.user.id,
+          postId: _post!.id,
+          username: authState.user.username,
+          profileImageUrl: authState.user.profileImageUrl,
+        );
       } else {
         await postRepo.unlikePost(userId: authState.user.id, postId: _post!.id);
       }
@@ -186,10 +192,38 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
     );
   }
 
-  void _sharePost() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Share feature coming soon')));
+  Future<void> _sharePost() async {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is! Authenticated || _post == null || _author == null) return;
+
+    try {
+      // Get share position origin for iOS
+      final sharePositionOrigin = ShareService.getSharePositionOrigin(context);
+
+      final shareService = ShareService();
+      await shareService.sharePost(
+        postId: _post!.id,
+        userId: authState.user.id,
+        post: _post!,
+        authorUsername: _author!.username,
+        sharePositionOrigin: sharePositionOrigin,
+      );
+
+      // Update share count optimistically
+      if (mounted) {
+        setState(() {
+          _interactionState = _interactionState?.copyWith(
+            sharesCount: (_interactionState?.sharesCount ?? 0) + 1,
+          );
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error sharing post: ${e.toString()}')),
+        );
+      }
+    }
   }
 
 

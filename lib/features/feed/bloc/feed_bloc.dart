@@ -142,8 +142,18 @@ class FeedBloc extends Bloc<FeedEvent, FeedState> {
         return 'poem';
       case ContentFilter.story:
         return 'story';
+      case ContentFilter.book:
+        return 'book';
       case ContentFilter.joke:
         return 'joke';
+      case ContentFilter.reflection:
+        return 'reflection';
+      case ContentFilter.research:
+        return 'research';
+      case ContentFilter.novel:
+        return 'novel';
+      case ContentFilter.other:
+        return 'other';
       case ContentFilter.all:
         return '';
     }

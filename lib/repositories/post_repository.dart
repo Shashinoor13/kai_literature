@@ -5,16 +5,24 @@ import 'package:literature/models/draft_model.dart';
 import 'package:literature/models/comment_model.dart';
 import 'package:literature/models/story_model.dart';
 import 'package:literature/models/report_reason.dart';
+import 'package:literature/repositories/notification_repository.dart';
+import 'package:literature/models/notification_model.dart';
 import 'dart:io';
 
 /// Repository for posts, drafts, and stories
 class PostRepository {
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
+  final NotificationRepository _notificationRepository;
 
-  PostRepository({FirebaseFirestore? firestore, FirebaseStorage? storage})
-    : _firestore = firestore ?? FirebaseFirestore.instance,
-      _storage = storage ?? FirebaseStorage.instance;
+  PostRepository({
+    FirebaseFirestore? firestore,
+    FirebaseStorage? storage,
+    NotificationRepository? notificationRepository,
+  })  : _firestore = firestore ?? FirebaseFirestore.instance,
+        _storage = storage ?? FirebaseStorage.instance,
+        _notificationRepository =
+            notificationRepository ?? NotificationRepository();
 
   /// Create a new post
   Future<String> createPost({
@@ -37,6 +45,7 @@ class PostRepository {
         'sharesCount': 0,
         'favoritesCount': 0,
         'trendingScore': 0.0,
+        'status': 'active',
         'createdAt': FieldValue.serverTimestamp(),
       });
       return docRef.id;
@@ -287,8 +296,10 @@ class PostRepository {
         .limit(50)
         .snapshots()
         .map(
-          (snapshot) =>
-              snapshot.docs.map((doc) => PostModel.fromFirestore(doc)).toList(),
+          (snapshot) => snapshot.docs
+              .map((doc) => PostModel.fromFirestore(doc))
+              .where((post) => post.status == PostStatus.active) // Filter in-memory
+              .toList(),
         );
   }
 
@@ -317,7 +328,9 @@ class PostRepository {
         .snapshots()) {
       final posts = snapshot.docs
           .map((doc) => PostModel.fromFirestore(doc))
-          .where((post) => followingIds.contains(post.authorId))
+          .where((post) =>
+              followingIds.contains(post.authorId) &&
+              post.status == PostStatus.active) // Filter in-memory
           .toList();
 
       yield posts;
@@ -333,8 +346,10 @@ class PostRepository {
         .limit(50)
         .snapshots()
         .map(
-          (snapshot) =>
-              snapshot.docs.map((doc) => PostModel.fromFirestore(doc)).toList(),
+          (snapshot) => snapshot.docs
+              .map((doc) => PostModel.fromFirestore(doc))
+              .where((post) => post.status == PostStatus.active) // Filter in-memory
+              .toList(),
         );
   }
 
@@ -367,7 +382,9 @@ class PostRepository {
         .snapshots()) {
       final posts = snapshot.docs
           .map((doc) => PostModel.fromFirestore(doc))
-          .where((post) => followingIds.contains(post.authorId))
+          .where((post) =>
+              followingIds.contains(post.authorId) &&
+              post.status == PostStatus.active) // Filter in-memory
           .toList();
 
       yield posts;
@@ -383,8 +400,10 @@ class PostRepository {
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map(
-          (snapshot) =>
-              snapshot.docs.map((doc) => PostModel.fromFirestore(doc)).toList(),
+          (snapshot) => snapshot.docs
+              .map((doc) => PostModel.fromFirestore(doc))
+              .where((post) => post.status == PostStatus.active) // Filter in-memory
+              .toList(),
         );
   }
 
@@ -408,6 +427,9 @@ class PostRepository {
       final posts = snapshot.docs
           .map((doc) => PostModel.fromFirestore(doc))
           .where((post) {
+            // Filter out suspended/removed posts
+            if (post.status != PostStatus.active) return false;
+
             // Filter out posts from blocked users
             if (blockedIds.contains(post.authorId)) return false;
 
@@ -424,7 +446,12 @@ class PostRepository {
   }
 
   /// Like a post
-  Future<void> likePost({required String userId, required String postId}) async {
+  Future<void> likePost({
+    required String userId,
+    required String postId,
+    String? username,
+    String? profileImageUrl,
+  }) async {
     try {
       final batch = _firestore.batch();
 
@@ -445,6 +472,23 @@ class PostRepository {
       );
 
       await batch.commit();
+
+      // Get post to find the author
+      final postDoc = await _firestore.collection('posts').doc(postId).get();
+      if (postDoc.exists) {
+        final postAuthorId = postDoc.data()?['authorId'] as String?;
+        if (postAuthorId != null && postAuthorId != userId) {
+          // Create notification for post author
+          await _notificationRepository.createNotification(
+            userId: postAuthorId,
+            type: NotificationType.like,
+            fromUserId: userId,
+            fromUsername: username,
+            fromUserProfileImage: profileImageUrl,
+            postId: postId,
+          );
+        }
+      }
     } catch (e) {
       throw Exception('Failed to like post: $e');
     }
@@ -570,6 +614,8 @@ class PostRepository {
     required String authorId,
     required String content,
     String? parentCommentId,
+    String? username,
+    String? profileImageUrl,
   }) async {
     try {
       final batch = _firestore.batch();
@@ -591,6 +637,24 @@ class PostRepository {
       );
 
       await batch.commit();
+
+      // Get post to find the author
+      final postDoc = await _firestore.collection('posts').doc(postId).get();
+      if (postDoc.exists) {
+        final postAuthorId = postDoc.data()?['authorId'] as String?;
+        if (postAuthorId != null && postAuthorId != authorId) {
+          // Create notification for post author
+          await _notificationRepository.createNotification(
+            userId: postAuthorId,
+            type: NotificationType.comment,
+            fromUserId: authorId,
+            fromUsername: username,
+            fromUserProfileImage: profileImageUrl,
+            postId: postId,
+          );
+        }
+      }
+
       return commentRef.id;
     } catch (e) {
       throw Exception('Failed to add comment: $e');

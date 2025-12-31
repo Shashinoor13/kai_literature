@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.literature.literature</string>
+	<string>com.kaiverse.literature</string>
 	<key>PROJECT_ID</key>
 	<string>ram-literature-v2</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:353302887560:ios:b6fd631b286f7c8a50733d</string>
+	<string>1:353302887560:ios:86b367f8897ab7d150733d</string>
 </dict>
 </plist>

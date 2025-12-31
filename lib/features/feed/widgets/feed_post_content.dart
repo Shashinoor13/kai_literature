@@ -99,19 +99,13 @@ class _FeedPostContentState extends State<FeedPostContent> {
           },
           itemCount: _contentChunks.length,
           itemBuilder: (context, index) {
-            return Padding(
-              // Add padding to avoid overlap with UI elements
-              // Top: Search bar + Stories + Tabs + Filter chips
-              // Bottom: Author info + Interactions + Page counter
-              padding: const EdgeInsets.only(
-                bottom: 200,
-                top: 280,
-              ),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppSizes.xl,
-                  ),
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.xl,
+                  vertical: AppSizes.xl,
+                ),
+                child: SingleChildScrollView(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
@@ -151,7 +145,7 @@ class _FeedPostContentState extends State<FeedPostContent> {
         // Page counter at bottom - only show if multiple pages
         if (_contentChunks.length > 1)
           Positioned(
-            bottom: 150,
+            bottom: 120,
             left: 0,
             right: 0,
             child: Center(

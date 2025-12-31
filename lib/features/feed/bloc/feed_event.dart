@@ -11,7 +11,12 @@ enum ContentFilter {
   all, // All content types
   poem, // Only poems
   story, // Only stories
+  book, // Only books
   joke, // Only jokes
+  reflection, // Only reflections
+  research, // Only research
+  novel, // Only novels
+  other, // Only other
 }
 
 /// Feed events

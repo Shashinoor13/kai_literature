@@ -1,0 +1,40 @@
+# Flutter Native Splash Screen Configuration
+# Literature App - Monochrome Design
+
+flutter_native_splash:
+  # Background color (white for monochrome design)
+  color: "#FFFFFF"
+
+  # App icon/logo to display in center
+  image: assets/app_icon.png
+
+  # Logo size (pixels)
+  # Default is 256px
+  # Adjust this if your logo appears too large or small
+  # android_12_image: assets/app_icon.png
+
+  # Brand image at bottom (optional - for tagline)
+  # branding: assets/branding.png
+  # branding_mode: bottom
+
+  # Color of status bar
+  # Options: white, black, light, dark
+  color_dark: "#000000"
+  image_dark: assets/app_icon.png
+
+  # Android specific
+  android: true
+  android_gravity: center
+  android_12:
+    image: assets/app_icon.png
+    icon_background_color: "#FFFFFF"
+
+  # iOS specific
+  ios: true
+  ios_content_mode: center
+
+  # Web specific (optional)
+  web: false
+
+  # Full screen mode (hide status bar)
+  fullscreen: false

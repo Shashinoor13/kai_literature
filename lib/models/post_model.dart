@@ -1,6 +1,26 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
+/// Post status for content moderation
+enum PostStatus {
+  active,
+  suspended,
+  removed;
+
+  String toFirestore() => name;
+
+  static PostStatus fromFirestore(String? value) {
+    switch (value) {
+      case 'suspended':
+        return PostStatus.suspended;
+      case 'removed':
+        return PostStatus.removed;
+      default:
+        return PostStatus.active;
+    }
+  }
+}
+
 /// Post model matching Firestore structure
 class PostModel extends Equatable {
   final String id;
@@ -14,6 +34,8 @@ class PostModel extends Equatable {
   final int sharesCount;
   final int favoritesCount;
   final double trendingScore;
+  final PostStatus status;
+  final DateTime? suspendedAt;
   final DateTime createdAt;
 
   const PostModel({
@@ -28,6 +50,8 @@ class PostModel extends Equatable {
     this.sharesCount = 0,
     this.favoritesCount = 0,
     this.trendingScore = 0.0,
+    this.status = PostStatus.active,
+    this.suspendedAt,
     required this.createdAt,
   });
 
@@ -45,6 +69,10 @@ class PostModel extends Equatable {
       sharesCount: data['sharesCount'] ?? 0,
       favoritesCount: data['favoritesCount'] ?? 0,
       trendingScore: (data['trendingScore'] ?? 0).toDouble(),
+      status: PostStatus.fromFirestore(data['status']),
+      suspendedAt: data['suspendedAt'] != null
+          ? (data['suspendedAt'] as Timestamp).toDate()
+          : null,
       createdAt: data['createdAt'] != null
           ? (data['createdAt'] as Timestamp).toDate()
           : DateTime.now(),
@@ -63,6 +91,8 @@ class PostModel extends Equatable {
       'sharesCount': sharesCount,
       'favoritesCount': favoritesCount,
       'trendingScore': trendingScore,
+      'status': status.toFirestore(),
+      if (suspendedAt != null) 'suspendedAt': Timestamp.fromDate(suspendedAt!),
       'createdAt': Timestamp.fromDate(createdAt),
     };
   }
@@ -80,6 +110,8 @@ class PostModel extends Equatable {
         sharesCount,
         favoritesCount,
         trendingScore,
+        status,
+        suspendedAt,
         createdAt,
       ];
 }

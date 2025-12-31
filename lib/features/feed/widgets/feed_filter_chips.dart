@@ -22,13 +22,23 @@ extension ContentFilterExtension on ContentFilter {
   String get displayName {
     switch (this) {
       case ContentFilter.all:
-        return 'All';
+        return 'Library';
       case ContentFilter.poem:
         return 'Poems';
       case ContentFilter.story:
         return 'Stories';
+      case ContentFilter.book:
+        return 'Books';
       case ContentFilter.joke:
         return 'Jokes';
+      case ContentFilter.reflection:
+        return 'Reflections';
+      case ContentFilter.research:
+        return 'Research';
+      case ContentFilter.novel:
+        return 'Novels';
+      case ContentFilter.other:
+        return 'Other';
     }
   }
 }
@@ -95,7 +105,7 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           ),
           const SizedBox(height: AppSizes.md),
 
-          // Second level filter: All / Poems / Stories / Jokes
+          // Second level filter: All categories
           SizedBox(
             height: 36,
             child: ListView(
@@ -107,7 +117,17 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
                 const SizedBox(width: AppSizes.xs),
                 _buildContentFilterChip(context, ContentFilter.story),
                 const SizedBox(width: AppSizes.xs),
+                _buildContentFilterChip(context, ContentFilter.book),
+                const SizedBox(width: AppSizes.xs),
                 _buildContentFilterChip(context, ContentFilter.joke),
+                const SizedBox(width: AppSizes.xs),
+                _buildContentFilterChip(context, ContentFilter.reflection),
+                const SizedBox(width: AppSizes.xs),
+                _buildContentFilterChip(context, ContentFilter.research),
+                const SizedBox(width: AppSizes.xs),
+                _buildContentFilterChip(context, ContentFilter.novel),
+                const SizedBox(width: AppSizes.xs),
+                _buildContentFilterChip(context, ContentFilter.other),
               ],
             ),
           ),
@@ -151,47 +171,85 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
   Widget _buildContentFilterChip(BuildContext context, ContentFilter filter) {
     final isSelected = _selectedContentFilter == filter;
 
-    // Heroicons and color for each filter type
+    // Heroicons for each filter type (monochrome design - white when selected, white when not)
     Widget iconWidget;
-    Color chipColor;
     switch (filter) {
       case ContentFilter.all:
         iconWidget = HeroIcon(
-          HeroIcons.squares2x2,
+          HeroIcons.buildingLibrary,
           style: HeroIconStyle.outline,
           size: 18,
           color: isSelected ? Colors.black : Colors.white,
         );
-        chipColor = isSelected ? Colors.white : Colors.white12;
         break;
       case ContentFilter.poem:
         iconWidget = HeroIcon(
           HeroIcons.bookOpen,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : const Color(0xFF90EE90),
+          color: isSelected ? Colors.black : Colors.white,
         );
-        chipColor = isSelected ? const Color(0xFF90EE90) : Colors.white12;
         break;
       case ContentFilter.story:
         iconWidget = HeroIcon(
           HeroIcons.documentText,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : const Color(0xFFADD8E6),
+          color: isSelected ? Colors.black : Colors.white,
         );
-        chipColor = isSelected ? const Color(0xFFADD8E6) : Colors.white12;
+        break;
+      case ContentFilter.book:
+        iconWidget = HeroIcon(
+          HeroIcons.bookmarkSquare,
+          style: HeroIconStyle.outline,
+          size: 18,
+          color: isSelected ? Colors.black : Colors.white,
+        );
         break;
       case ContentFilter.joke:
         iconWidget = HeroIcon(
           HeroIcons.faceSmile,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : const Color(0xFFFFD700),
+          color: isSelected ? Colors.black : Colors.white,
         );
-        chipColor = isSelected ? const Color(0xFFFFD700) : Colors.white12;
+        break;
+      case ContentFilter.reflection:
+        iconWidget = HeroIcon(
+          HeroIcons.lightBulb,
+          style: HeroIconStyle.outline,
+          size: 18,
+          color: isSelected ? Colors.black : Colors.white,
+        );
+        break;
+      case ContentFilter.research:
+        iconWidget = HeroIcon(
+          HeroIcons.academicCap,
+          style: HeroIconStyle.outline,
+          size: 18,
+          color: isSelected ? Colors.black : Colors.white,
+        );
+        break;
+      case ContentFilter.novel:
+        iconWidget = HeroIcon(
+          HeroIcons.newspaper,
+          style: HeroIconStyle.outline,
+          size: 18,
+          color: isSelected ? Colors.black : Colors.white,
+        );
+        break;
+      case ContentFilter.other:
+        iconWidget = HeroIcon(
+          HeroIcons.ellipsisHorizontalCircle,
+          style: HeroIconStyle.outline,
+          size: 18,
+          color: isSelected ? Colors.black : Colors.white,
+        );
         break;
     }
+
+    // Monochrome design: white when selected, white12 when not
+    final chipColor = isSelected ? Colors.white : Colors.white12;
 
     return GestureDetector(
       onTap: () {
