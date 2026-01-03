@@ -349,10 +349,10 @@ class _CommentItem extends StatelessWidget {
               CircleAvatar(
                 radius: 18,
                 backgroundColor: Colors.white24,
-                backgroundImage: profileImage != null
+                backgroundImage: profileImage != null && profileImage.isNotEmpty
                     ? NetworkImage(profileImage)
                     : null,
-                child: profileImage == null
+                child: profileImage == null || profileImage.isEmpty
                     ? Text(
                         username[0].toUpperCase(),
                         style: const TextStyle(

@@ -84,7 +84,11 @@ class _SearchScreenState extends State<SearchScreen> {
             }
 
             if (state is SearchLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return Center(
+                child: CircularProgressIndicator(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              );
             }
 
             if (state is SearchError) {
@@ -125,7 +129,10 @@ class _EmptyState extends StatelessWidget {
     return Center(
       child: Text(
         message,
-        style: const TextStyle(fontSize: 16, color: Colors.grey),
+        style: TextStyle(
+          fontSize: 16,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
         textAlign: TextAlign.center,
       ),
     );
@@ -149,6 +156,9 @@ class _SearchResults extends StatelessWidget {
       child: Column(
         children: [
           TabBar(
+            labelColor: Theme.of(context).colorScheme.primary,
+            unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+            indicatorColor: Theme.of(context).colorScheme.primary,
             tabs: [
               Tab(text: 'Users (${users.length})'),
               Tab(text: 'Posts (${posts.length})'),
@@ -189,11 +199,34 @@ class _UsersList extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: AppSizes.md),
           child: ListTile(
             leading: CircleAvatar(
-              child: Text(user.username[0].toUpperCase()),
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+              child: Text(
+                user.username[0].toUpperCase(),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
-            title: Text('@${user.username}'),
-            subtitle: user.bio.isNotEmpty ? Text(user.bio) : null,
-            trailing: const Icon(Icons.chevron_right),
+            title: Text(
+              '@${user.username}',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            subtitle: user.bio.isNotEmpty
+                ? Text(
+                    user.bio,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
+                  )
+                : null,
+            trailing: Icon(
+              Icons.chevron_right,
+              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
             onTap: () {
               context.push('/user/${user.id}');
             },
@@ -253,82 +286,96 @@ class _PostsList extends StatelessWidget {
         final post = posts[index];
         return Card(
           margin: const EdgeInsets.only(bottom: AppSizes.md),
-          child: Padding(
-            padding: const EdgeInsets.all(AppSizes.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header: Category and Date
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          _getCategoryIcon(post.category),
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(width: AppSizes.xs),
-                        Text(
-                          post.category.toUpperCase(),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+          child: InkWell(
+            onTap: () {
+              context.push('/post/${post.id}');
+            },
+            borderRadius: BorderRadius.circular(AppSizes.radiusMd),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSizes.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header: Category and Date
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            _getCategoryIcon(post.category),
+                            style: const TextStyle(fontSize: 16),
                           ),
+                          const SizedBox(width: AppSizes.xs),
+                          Text(
+                            post.category.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        _formatDate(post.createdAt),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                         ),
-                      ],
-                    ),
-                    Text(
-                      _formatDate(post.createdAt),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSizes.sm),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSizes.sm),
 
-                // Title
-                if (post.title.isNotEmpty) ...[
-                  Text(
-                    post.title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                  // Title
+                  if (post.title.isNotEmpty) ...[
+                    Text(
+                      post.title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 2,
+                    const SizedBox(height: AppSizes.xs),
+                  ],
+
+                  // Content Preview
+                  Text(
+                    post.content,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.8),
+                    ),
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppSizes.xs),
+                  const SizedBox(height: AppSizes.sm),
+
+                  // Interaction Stats
+                  Row(
+                    children: [
+                      _InteractionStat(
+                        icon: Icons.favorite_outline,
+                        count: post.likesCount,
+                      ),
+                      const SizedBox(width: AppSizes.md),
+                      _InteractionStat(
+                        icon: Icons.comment_outlined,
+                        count: post.commentsCount,
+                      ),
+                      const SizedBox(width: AppSizes.md),
+                      _InteractionStat(
+                        icon: Icons.share_outlined,
+                        count: post.sharesCount,
+                      ),
+                    ],
+                  ),
                 ],
-
-                // Content Preview
-                Text(
-                  post.content,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: AppSizes.sm),
-
-                // Interaction Stats
-                Row(
-                  children: [
-                    _InteractionStat(
-                      icon: Icons.favorite_outline,
-                      count: post.likesCount,
-                    ),
-                    const SizedBox(width: AppSizes.md),
-                    _InteractionStat(
-                      icon: Icons.comment_outlined,
-                      count: post.commentsCount,
-                    ),
-                    const SizedBox(width: AppSizes.md),
-                    _InteractionStat(
-                      icon: Icons.share_outlined,
-                      count: post.sharesCount,
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
         );
@@ -351,11 +398,18 @@ class _InteractionStat extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey),
+        Icon(
+          icon,
+          size: 16,
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
         const SizedBox(width: 4),
         Text(
           '$count',
-          style: const TextStyle(fontSize: 14, color: Colors.grey),
+          style: TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
         ),
       ],
     );

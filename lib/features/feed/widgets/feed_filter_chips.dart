@@ -12,7 +12,7 @@ extension FeedTypeExtension on FeedType {
       case FeedType.following:
         return 'Following';
       case FeedType.recommended:
-        return 'Recommended';
+        return 'Writers';
     }
   }
 }
@@ -47,10 +47,7 @@ extension ContentFilterExtension on ContentFilter {
 class FeedFilterChips extends StatefulWidget {
   final FeedBloc feedBloc;
 
-  const FeedFilterChips({
-    super.key,
-    required this.feedBloc,
-  });
+  const FeedFilterChips({super.key, required this.feedBloc});
 
   @override
   State<FeedFilterChips> createState() => _FeedFilterChipsState();
@@ -81,13 +78,6 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Colors.transparent, Colors.black.withValues(alpha: 0.3)],
-        ),
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -151,14 +141,18 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           vertical: AppSizes.xs,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected
+              ? Theme.of(context).colorScheme.primary
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(20),
         ),
         child: Center(
           child: Text(
             feedType.displayName,
             style: TextStyle(
-              color: isSelected ? Colors.black : Colors.white,
+              color: isSelected
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : Theme.of(context).colorScheme.onSurface,
               fontSize: 15,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
@@ -171,7 +165,11 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
   Widget _buildContentFilterChip(BuildContext context, ContentFilter filter) {
     final isSelected = _selectedContentFilter == filter;
 
-    // Heroicons for each filter type (monochrome design - white when selected, white when not)
+    final iconColor = isSelected
+        ? Theme.of(context).colorScheme.onPrimary
+        : Theme.of(context).colorScheme.onSurface;
+
+    // Heroicons for each filter type (monochrome design)
     Widget iconWidget;
     switch (filter) {
       case ContentFilter.all:
@@ -179,7 +177,7 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           HeroIcons.buildingLibrary,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : Colors.white,
+          color: iconColor,
         );
         break;
       case ContentFilter.poem:
@@ -187,7 +185,7 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           HeroIcons.bookOpen,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : Colors.white,
+          color: iconColor,
         );
         break;
       case ContentFilter.story:
@@ -195,7 +193,7 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           HeroIcons.documentText,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : Colors.white,
+          color: iconColor,
         );
         break;
       case ContentFilter.book:
@@ -203,7 +201,7 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           HeroIcons.bookmarkSquare,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : Colors.white,
+          color: iconColor,
         );
         break;
       case ContentFilter.joke:
@@ -211,7 +209,7 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           HeroIcons.faceSmile,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : Colors.white,
+          color: iconColor,
         );
         break;
       case ContentFilter.reflection:
@@ -219,7 +217,7 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           HeroIcons.lightBulb,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : Colors.white,
+          color: iconColor,
         );
         break;
       case ContentFilter.research:
@@ -227,7 +225,7 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           HeroIcons.academicCap,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : Colors.white,
+          color: iconColor,
         );
         break;
       case ContentFilter.novel:
@@ -235,7 +233,7 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           HeroIcons.newspaper,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : Colors.white,
+          color: iconColor,
         );
         break;
       case ContentFilter.other:
@@ -243,13 +241,15 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           HeroIcons.ellipsisHorizontalCircle,
           style: HeroIconStyle.outline,
           size: 18,
-          color: isSelected ? Colors.black : Colors.white,
+          color: iconColor,
         );
         break;
     }
 
-    // Monochrome design: white when selected, white12 when not
-    final chipColor = isSelected ? Colors.white : Colors.white12;
+    // Monochrome design using theme colors
+    final chipColor = isSelected
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1);
 
     return GestureDetector(
       onTap: () {
@@ -266,7 +266,9 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
           color: chipColor,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? Colors.white : Colors.white24,
+            color: isSelected
+                ? Theme.of(context).colorScheme.primary
+                : Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -278,7 +280,7 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
             Text(
               filter.displayName,
               style: TextStyle(
-                color: isSelected ? Colors.black : Colors.white,
+                color: iconColor,
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),

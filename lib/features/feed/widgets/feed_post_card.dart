@@ -6,6 +6,8 @@ import 'package:literature/core/widgets/report_post_dialog.dart';
 import 'package:literature/core/services/share_service.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
+import 'package:literature/features/theme/bloc/theme_bloc.dart';
+import 'package:literature/features/theme/bloc/theme_state.dart' as theme_state;
 import 'package:literature/features/feed/screens/comment_screen.dart';
 import 'package:literature/features/feed/widgets/feed_post_author_info.dart';
 import 'package:literature/features/feed/widgets/feed_post_content.dart';
@@ -325,73 +327,86 @@ class _FeedPostCardState extends State<FeedPostCard>
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onDoubleTap: () {
-        // Trigger double-tap animation
-        _doubleTapAnimationController.forward(from: 0);
+    return BlocBuilder<ThemeBloc, theme_state.ThemeState>(
+      builder: (context, themeState) {
+        // Check if there's a background image
+        final hasBackgroundImage = themeState is theme_state.ThemeLoaded &&
+                                   themeState.config.backgroundImagePath != null &&
+                                   themeState.config.backgroundImagePath!.isNotEmpty;
 
-        // Only like if not already liked
-        if (!_interactionState.isLiked) {
-          _toggleLike();
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        height: double.infinity,
-        color: Colors.black,
-        child: Stack(
-          children: [
-            // Post Content - Centered
-            FeedPostContent(post: widget.post),
+        return GestureDetector(
+          onDoubleTap: () {
+            // Trigger double-tap animation
+            _doubleTapAnimationController.forward(from: 0);
 
-            // Author Info - Bottom Left
-            Positioned(
-              bottom: 20,
-              left: AppSizes.md,
-              right: 80,
-              child: FeedPostAuthorInfo(
-                author: _author,
-                post: widget.post,
-              ),
+            // Only like if not already liked
+            if (!_interactionState.isLiked) {
+              _toggleLike();
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              color: hasBackgroundImage
+                  ? Colors.transparent
+                  : Theme.of(context).colorScheme.surface,
             ),
+            child: Stack(
+              children: [
+                // Post Content - Centered
+                FeedPostContent(post: widget.post),
 
-            // Interaction Buttons - Right Side
-            Positioned(
-              right: AppSizes.sm,
-              bottom: 20,
-              child: FeedPostInteractions(
-                isLiked: _interactionState.isLiked,
-                isFavorited: _interactionState.isFavorited,
-                likesCount: _interactionState.likesCount,
-                commentsCount: _interactionState.commentsCount,
-                sharesCount: _interactionState.sharesCount,
-                onLikeTap: _toggleLike,
-                onCommentTap: _openComments,
-                onFavoriteTap: _toggleFavorite,
-                onShareTap: _sharePost,
-                onOptionsTap: _showOptionsMenu,
-                likeAnimation: _likeScaleAnimation,
-              ),
-            ),
-
-            // Double-tap heart animation overlay
-            Center(
-              child: FadeTransition(
-                opacity: _doubleTapOpacityAnimation,
-                child: ScaleTransition(
-                  scale: _doubleTapScaleAnimation,
-                  child: const HeroIcon(
-                    HeroIcons.heart,
-                    size: 100,
-                    color: Colors.white,
-                    style: HeroIconStyle.solid,
+                // Author Info - Bottom Left
+                Positioned(
+                  bottom: 20,
+                  left: AppSizes.md,
+                  right: 80,
+                  child: FeedPostAuthorInfo(
+                    author: _author,
+                    post: widget.post,
                   ),
                 ),
-              ),
+
+                // Interaction Buttons - Right Side
+                Positioned(
+                  right: AppSizes.sm,
+                  bottom: 20,
+                  child: FeedPostInteractions(
+                    isLiked: _interactionState.isLiked,
+                    isFavorited: _interactionState.isFavorited,
+                    likesCount: _interactionState.likesCount,
+                    commentsCount: _interactionState.commentsCount,
+                    sharesCount: _interactionState.sharesCount,
+                    onLikeTap: _toggleLike,
+                    onCommentTap: _openComments,
+                    onFavoriteTap: _toggleFavorite,
+                    onShareTap: _sharePost,
+                    onOptionsTap: _showOptionsMenu,
+                    likeAnimation: _likeScaleAnimation,
+                  ),
+                ),
+
+                // Double-tap heart animation overlay
+                Center(
+                  child: FadeTransition(
+                    opacity: _doubleTapOpacityAnimation,
+                    child: ScaleTransition(
+                      scale: _doubleTapScaleAnimation,
+                      child: HeroIcon(
+                        HeroIcons.heart,
+                        size: 100,
+                        color: Theme.of(context).colorScheme.primary,
+                        style: HeroIconStyle.solid,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

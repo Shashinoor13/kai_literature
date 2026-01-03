@@ -76,6 +76,28 @@ class SettingsScreen extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.only(top: AppSizes.lg, bottom: AppSizes.sm),
             child: Text(
+              'Appearance',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ),
+          ListTile(
+            leading: const HeroIcon(
+              HeroIcons.paintBrush,
+              style: HeroIconStyle.outline,
+            ),
+            title: const Text('Theme Settings'),
+            trailing: const HeroIcon(
+              HeroIcons.chevronRight,
+              style: HeroIconStyle.outline,
+              size: 20,
+            ),
+            onTap: () => context.push('/theme-settings'),
+            contentPadding: EdgeInsets.zero,
+          ),
+          const Divider(),
+          const Padding(
+            padding: EdgeInsets.only(top: AppSizes.lg, bottom: AppSizes.sm),
+            child: Text(
               'App Info',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),

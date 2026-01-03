@@ -153,14 +153,14 @@ class _FeedPostAuthorInfoState extends State<FeedPostAuthorInfo> {
               onTap: _navigateToProfile,
               child: CircleAvatar(
                 radius: 20,
-                backgroundColor: Colors.white24,
+                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                 backgroundImage: widget.author?.profileImageUrl.isNotEmpty == true
                     ? CachedNetworkImageProvider(widget.author!.profileImageUrl)
                     : null,
                 child: widget.author?.profileImageUrl.isEmpty != false
                     ? Text(
                         widget.author?.username[0].toUpperCase() ?? '?',
-                        style: const TextStyle(color: Colors.white),
+                        style: TextStyle(color: Theme.of(context).colorScheme.primary),
                       )
                     : null,
               ),
@@ -175,8 +175,8 @@ class _FeedPostAuthorInfoState extends State<FeedPostAuthorInfo> {
                     onTap: _navigateToProfile,
                     child: Text(
                       widget.author?.username ?? 'Loading...',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -194,26 +194,30 @@ class _FeedPostAuthorInfoState extends State<FeedPostAuthorInfo> {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _isFollowing ? Colors.white24 : Colors.white,
+                          color: _isFollowing
+                              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+                              : Theme.of(context).colorScheme.primary,
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.primary,
                             width: 1,
                           ),
                         ),
                         child: _isLoading
-                            ? const SizedBox(
+                            ? SizedBox(
                                 height: 12,
                                 width: 12,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  color: Colors.white,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                               )
                             : Text(
                                 _isFollowing ? 'Following' : 'Follow',
                                 style: TextStyle(
-                                  color: _isFollowing ? Colors.white : Colors.black,
+                                  color: _isFollowing
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.onPrimary,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -230,7 +234,10 @@ class _FeedPostAuthorInfoState extends State<FeedPostAuthorInfo> {
         // Date
         Text(
           FormatUtils.getTimeAgo(widget.post.createdAt),
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+            fontSize: 12,
+          ),
         ),
       ],
     );

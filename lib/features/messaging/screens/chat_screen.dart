@@ -118,24 +118,21 @@ class _ChatScreenState extends State<ChatScreen> {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         if (authState is! Authenticated) {
-          return const Scaffold(
-            backgroundColor: Colors.black,
+          return Scaffold(
             body: Center(
               child: Text(
                 'Please log in',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               ),
             ),
           );
         }
 
         return Scaffold(
-          backgroundColor: Colors.black,
           appBar: AppBar(
-            backgroundColor: Colors.black,
             elevation: 0,
             leading: IconButton(
-              icon: const HeroIcon(HeroIcons.arrowLeft, color: Colors.white),
+              icon: HeroIcon(HeroIcons.arrowLeft, color: Theme.of(context).colorScheme.onSurface),
               onPressed: () => context.pop(),
             ),
             title: InkWell(
@@ -145,7 +142,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 children: [
                   CircleAvatar(
                     radius: 16,
-                    backgroundColor: Colors.white12,
+                    backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     backgroundImage:
                         _otherProfileImage != null &&
                             _otherProfileImage!.isNotEmpty
@@ -156,10 +153,10 @@ class _ChatScreenState extends State<ChatScreen> {
                             _otherProfileImage!.isEmpty
                         ? Text(
                             (_otherUsername ?? '?')[0].toUpperCase(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                             ),
                           )
                         : null,
@@ -168,8 +165,8 @@ class _ChatScreenState extends State<ChatScreen> {
                   Flexible(
                     child: Text(
                       _otherUsername ?? 'Chat',
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
                       ),
@@ -177,10 +174,10 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                   ),
                   const SizedBox(width: AppSizes.xs),
-                  const HeroIcon(
+                  HeroIcon(
                     HeroIcons.chevronRight,
                     size: 16,
-                    color: Colors.white70,
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ],
               ),
@@ -193,26 +190,26 @@ class _ChatScreenState extends State<ChatScreen> {
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(AppSizes.md),
-                  decoration: const BoxDecoration(
-                    color: Colors.white12,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                     border: Border(
-                      bottom: BorderSide(color: Colors.white24, width: 1),
+                      bottom: BorderSide(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2), width: 1),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const HeroIcon(
+                      HeroIcon(
                         HeroIcons.noSymbol,
                         size: 20,
-                        color: Colors.white70,
+                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                       ),
                       const SizedBox(width: AppSizes.sm),
                       Expanded(
                         child: Text(
                           'You have blocked this person and can\'t send messages',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
-                            color: Colors.white70,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                           ),
                         ),
                       ),
@@ -310,7 +307,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                 vertical: AppSizes.sm,
                               ),
                               decoration: BoxDecoration(
-                                color: isMe ? Colors.white : Colors.white12,
+                                color: isMe
+                                    ? Theme.of(context).colorScheme.primary
+                                    : Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(
                                   AppSizes.radiusMd,
                                 ),
@@ -327,7 +326,9 @@ class _ChatScreenState extends State<ChatScreen> {
                                     style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w400,
-                                      color: isMe ? Colors.black : Colors.white,
+                                      color: isMe
+                                          ? Theme.of(context).colorScheme.onPrimary
+                                          : Theme.of(context).colorScheme.onSurface,
                                       height: 1.5,
                                     ),
                                   ),
@@ -337,8 +338,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: isMe
-                                          ? Colors.black54
-                                          : Colors.white54,
+                                          ? Theme.of(context).colorScheme.onPrimary.withValues(alpha: 0.7)
+                                          : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                     ),
                                   ),
                                 ],
@@ -349,8 +350,10 @@ class _ChatScreenState extends State<ChatScreen> {
                       );
                     }
 
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
+                    return Center(
+                      child: CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                     );
                   },
                 ),
@@ -359,10 +362,10 @@ class _ChatScreenState extends State<ChatScreen> {
               // Message input
               Container(
                 padding: const EdgeInsets.all(AppSizes.md),
-                decoration: const BoxDecoration(
-                  color: Colors.black,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   border: Border(
-                    top: BorderSide(color: Colors.white12, width: 1),
+                    top: BorderSide(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1), width: 1),
                   ),
                 ),
                 child: SafeArea(
@@ -375,22 +378,22 @@ class _ChatScreenState extends State<ChatScreen> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white12,
+                            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(24),
                           ),
                           child: TextField(
                             controller: _messageController,
                             enabled: !_isBlocked,
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 15,
                               fontWeight: FontWeight.w400,
                             ),
                             decoration: InputDecoration(
                               fillColor: Colors.transparent,
                               hintText: 'Message...',
-                              hintStyle: const TextStyle(
-                                color: Colors.white54,
+                              hintStyle: TextStyle(
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                                 fontSize: 15,
                               ),
                               border: InputBorder.none,
@@ -421,14 +424,18 @@ class _ChatScreenState extends State<ChatScreen> {
                           width: 40,
                           height: 40,
                           decoration: BoxDecoration(
-                            color: _isBlocked ? Colors.white24 : Colors.white,
+                            color: _isBlocked
+                              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+                              : Theme.of(context).colorScheme.primary,
                             shape: BoxShape.circle,
                           ),
                           child: Center(
                             child: HeroIcon(
                               HeroIcons.paperAirplane,
                               size: 20,
-                              color: _isBlocked ? Colors.white38 : Colors.black,
+                              color: _isBlocked
+                                ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
+                                : Theme.of(context).colorScheme.onPrimary,
                             ),
                           ),
                         ),

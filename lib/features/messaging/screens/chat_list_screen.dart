@@ -89,7 +89,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
             ScaffoldMessenger.of(sheetContext).showSnackBar(
               SnackBar(
                 content: Text(e.toString()),
-                backgroundColor: Colors.white,
+                backgroundColor: Theme.of(sheetContext).colorScheme.primary,
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -104,27 +104,24 @@ class _ChatListScreenState extends State<ChatListScreen> {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, authState) {
         if (authState is! Authenticated) {
-          return const Scaffold(
-            backgroundColor: Colors.black,
+          return Scaffold(
             body: Center(
               child: Text(
                 'Please log in',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
               ),
             ),
           );
         }
 
         return Scaffold(
-          backgroundColor: Colors.black,
           appBar: AppBar(
             centerTitle: false,
-            backgroundColor: Colors.black,
             elevation: 0,
-            title: const Text(
+            title: Text(
               'Messages',
               style: TextStyle(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
@@ -150,7 +147,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(state.message),
-                          backgroundColor: Colors.white,
+                          backgroundColor: Theme.of(context).colorScheme.primary,
                           behavior: SnackBarBehavior.floating,
                         ),
                       );
@@ -166,8 +163,10 @@ class _ChatListScreenState extends State<ChatListScreen> {
                   },
                   builder: (context, state) {
                     if (state is MessagingLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
+                      return Center(
+                        child: CircularProgressIndicator(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       );
                     }
 
@@ -215,8 +214,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
                       return ListView.separated(
                         itemCount: filteredConversations.length,
-                        separatorBuilder: (context, index) => const Divider(
-                          color: Colors.white12,
+                        separatorBuilder: (context, index) => Divider(
+                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                           height: 1,
                           indent: 72,
                         ),
@@ -243,7 +242,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                 ),
                                 leading: CircleAvatar(
                                   radius: 28,
-                                  backgroundColor: Colors.white12,
+                                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                                   backgroundImage:
                                       profileImage != null &&
                                           profileImage.isNotEmpty
@@ -254,36 +253,36 @@ class _ChatListScreenState extends State<ChatListScreen> {
                                           profileImage.isEmpty
                                       ? Text(
                                           username[0].toUpperCase(),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.white,
+                                            color: Theme.of(context).colorScheme.onSurface,
                                           ),
                                         )
                                       : null,
                                 ),
                                 title: Text(
                                   username,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 subtitle: Text(
                                   conversation.lastMessage,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.white70,
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                   ),
                                 ),
                                 trailing: Text(
                                   timeago.format(conversation.updatedAt),
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.white54,
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                                   ),
                                 ),
                                 onTap: () {
@@ -329,12 +328,12 @@ class _ChatListScreenState extends State<ChatListScreen> {
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () => _showMutualFollowersSheet(authState.user.id),
-            backgroundColor: Colors.white,
-            foregroundColor: Colors.black,
-            child: const HeroIcon(
+            backgroundColor: Theme.of(context).colorScheme.primary,
+            foregroundColor: Theme.of(context).colorScheme.onPrimary,
+            child: HeroIcon(
               HeroIcons.plus,
               size: 24,
-              color: Colors.black,
+              color: Theme.of(context).colorScheme.onPrimary,
             ),
           ),
         );
@@ -412,9 +411,9 @@ class _MutualFollowersSheetState extends State<_MutualFollowersSheet> {
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         children: [
@@ -425,7 +424,7 @@ class _MutualFollowersSheetState extends State<_MutualFollowersSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white24,
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -437,23 +436,27 @@ class _MutualFollowersSheetState extends State<_MutualFollowersSheet> {
               horizontal: AppSizes.md,
               vertical: AppSizes.sm,
             ),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: Colors.white12)),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+                ),
+              ),
             ),
             child: Row(
               children: [
-                const HeroIcon(
+                HeroIcon(
                   HeroIcons.users,
                   style: HeroIconStyle.outline,
                   size: 24,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
                 const SizedBox(width: AppSizes.sm),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'New Message',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -462,11 +465,11 @@ class _MutualFollowersSheetState extends State<_MutualFollowersSheet> {
                 ),
                 GestureDetector(
                   onTap: () => Navigator.of(context).pop(),
-                  child: const HeroIcon(
+                  child: HeroIcon(
                     HeroIcons.xMark,
                     style: HeroIconStyle.outline,
                     size: 24,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -476,8 +479,10 @@ class _MutualFollowersSheetState extends State<_MutualFollowersSheet> {
           // Content
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
+                ? Center(
+                    child: CircularProgressIndicator(
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
                   )
                 : _error != null
                     ? Center(
@@ -486,26 +491,26 @@ class _MutualFollowersSheetState extends State<_MutualFollowersSheet> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const HeroIcon(
+                              HeroIcon(
                                 HeroIcons.exclamationTriangle,
                                 size: 48,
-                                color: Colors.grey,
+                                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                               ),
                               const SizedBox(height: AppSizes.md),
                               Text(
                                 'Error loading followers',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 18,
-                                  color: Colors.grey,
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
                               const SizedBox(height: AppSizes.xs),
                               Text(
                                 _error!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey,
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                                 ),
                                 textAlign: TextAlign.center,
                               ),
@@ -518,26 +523,26 @@ class _MutualFollowersSheetState extends State<_MutualFollowersSheet> {
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const HeroIcon(
+                                HeroIcon(
                                   HeroIcons.userGroup,
                                   size: 64,
-                                  color: Colors.grey,
+                                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                                 ),
                                 const SizedBox(height: AppSizes.md),
-                                const Text(
+                                Text(
                                   'No mutual followers',
                                   style: TextStyle(
                                     fontSize: 18,
-                                    color: Colors.grey,
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 const SizedBox(height: AppSizes.xs),
-                                const Text(
+                                Text(
                                   'Follow people to start chatting',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Colors.grey,
+                                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                                   ),
                                 ),
                               ],
@@ -546,8 +551,8 @@ class _MutualFollowersSheetState extends State<_MutualFollowersSheet> {
                         : ListView.separated(
                             padding: const EdgeInsets.all(AppSizes.md),
                             itemCount: _mutualFollowers!.length,
-                            separatorBuilder: (context, index) => const Divider(
-                              color: Colors.white12,
+                            separatorBuilder: (context, index) => Divider(
+                              color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
                               height: 1,
                               indent: 72,
                             ),
@@ -560,27 +565,27 @@ class _MutualFollowersSheetState extends State<_MutualFollowersSheet> {
                                 ),
                                 leading: CircleAvatar(
                                   radius: 28,
-                                  backgroundColor: Colors.white12,
+                                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                                   backgroundImage: user.profileImageUrl.isNotEmpty
                                       ? NetworkImage(user.profileImageUrl)
                                       : null,
                                   child: user.profileImageUrl.isEmpty
                                       ? Text(
                                           user.username[0].toUpperCase(),
-                                          style: const TextStyle(
+                                          style: TextStyle(
                                             fontSize: 20,
                                             fontWeight: FontWeight.w600,
-                                            color: Colors.white,
+                                            color: Theme.of(context).colorScheme.onSurface,
                                           ),
                                         )
                                       : null,
                                 ),
                                 title: Text(
                                   user.username,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w600,
                                     fontSize: 16,
-                                    color: Colors.white,
+                                    color: Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 subtitle: user.bio.isNotEmpty
@@ -588,9 +593,9 @@ class _MutualFollowersSheetState extends State<_MutualFollowersSheet> {
                                         user.bio,
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontSize: 14,
-                                          color: Colors.white70,
+                                          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
                                         ),
                                       )
                                     : null,

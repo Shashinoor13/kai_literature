@@ -59,13 +59,6 @@ class FeedStoryBar extends StatelessWidget {
         return Container(
           height: 110,
           padding: const EdgeInsets.symmetric(vertical: AppSizes.xs),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.black.withValues(alpha: 0.7), Colors.transparent],
-            ),
-          ),
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: AppSizes.sm),

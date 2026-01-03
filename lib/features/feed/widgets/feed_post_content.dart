@@ -114,8 +114,8 @@ class _FeedPostContentState extends State<FeedPostContent> {
                       if (index == 0 && widget.post.title.isNotEmpty) ...[
                         Text(
                           widget.post.title,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                             height: 1.4,
@@ -126,8 +126,8 @@ class _FeedPostContentState extends State<FeedPostContent> {
                       ],
                       Text(
                         _contentChunks[index],
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
                           height: 1.5,
@@ -155,17 +155,17 @@ class _FeedPostContentState extends State<FeedPostContent> {
                   vertical: AppSizes.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.black54,
+                  color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
                   borderRadius: BorderRadius.circular(AppSizes.radiusSm),
                   border: Border.all(
-                    color: Colors.white24,
+                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                     width: 1,
                   ),
                 ),
                 child: Text(
                   '${_currentPage + 1}/${_contentChunks.length}',
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                   ),
@@ -184,12 +184,12 @@ class _FeedPostContentState extends State<FeedPostContent> {
               child: Container(
                 padding: const EdgeInsets.all(AppSizes.xs),
                 decoration: BoxDecoration(
-                  color: Colors.white24,
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(AppSizes.radiusSm),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.chevron_right,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.primary,
                   size: 20,
                 ),
               ),

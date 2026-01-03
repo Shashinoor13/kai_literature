@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -9,6 +10,8 @@ import 'package:literature/features/feed/bloc/feed_event.dart';
 import 'package:literature/features/feed/bloc/feed_state.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
+import 'package:literature/features/theme/bloc/theme_bloc.dart';
+import 'package:literature/features/theme/bloc/theme_state.dart' as theme_state;
 import 'package:literature/repositories/post_repository.dart';
 import 'package:literature/repositories/auth_repository.dart';
 import 'package:literature/core/routing/scaffold_with_nav_bar.dart';
@@ -93,147 +96,170 @@ class _FeedScreenState extends State<FeedScreen> {
       },
       child: BlocProvider.value(
         value: _feedBloc,
-        child: Scaffold(
-          extendBodyBehindAppBar: true,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            title: GestureDetector(
-              onTap: () => context.push('/search'),
-              child: const SearchBarWidget(
-                hintText: 'Search posts, users...',
-                enabled: false,
+        child: BlocBuilder<ThemeBloc, theme_state.ThemeState>(
+          builder: (context, themeState) {
+            String? backgroundImagePath;
+            if (themeState is theme_state.ThemeLoaded) {
+              backgroundImagePath = themeState.config.backgroundImagePath;
+            }
+
+            return Scaffold(
+              extendBodyBehindAppBar: true,
+              appBar: AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
+                scrolledUnderElevation: 0,
+                title: GestureDetector(
+                  onTap: () => context.push('/search'),
+                  child: const SearchBarWidget(
+                    hintText: 'Search posts, users...',
+                    enabled: false,
+                  ),
+                ),
               ),
-            ),
-          ),
-          body: Stack(
-            children: [
-              // Main Feed Content
-              BlocBuilder<FeedBloc, FeedState>(
-                builder: (context, state) {
-                  if (state is FeedLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    );
-                  }
-
-                  if (state is FeedError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const HeroIcon(
-                            HeroIcons.exclamationTriangle,
-                            size: 64,
-                            color: Colors.grey,
-                          ),
-                          const SizedBox(height: AppSizes.md),
-                          Text(
-                            'Error loading feed',
-                            style: Theme.of(context).textTheme.headlineMedium,
-                          ),
-                          const SizedBox(height: AppSizes.md),
-                          Text(state.message),
-                          const SizedBox(height: AppSizes.lg),
-                          ElevatedButton(
-                            onPressed: () {
-                              _feedBloc.add(const RefreshFeedPosts());
-                            },
-                            child: const Text('Retry'),
-                          ),
-                        ],
+              body: Stack(
+                children: [
+                  // Background Image (if set)
+                  if (backgroundImagePath != null && backgroundImagePath.isNotEmpty)
+                    Positioned.fill(
+                      child: Image.file(
+                        File(backgroundImagePath),
+                        fit: BoxFit.cover,
                       ),
-                    );
-                  }
+                    ),
 
-                  if (state is FeedLoaded) {
-                    if (state.posts.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: AppSizes.xxl),
-                            const HeroIcon(
-                              HeroIcons.documentText,
-                              size: 64,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(height: AppSizes.md),
-                            Text(
-                              'No posts yet',
-                              style: Theme.of(context).textTheme.headlineMedium,
-                            ),
-                            const SizedBox(height: AppSizes.sm),
-                            const Text(
-                              'Be the first to share something!',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
+                  // Main Feed Content
+                  BlocBuilder<FeedBloc, FeedState>(
+                    builder: (context, state) {
+                      if (state is FeedLoading) {
+                        return const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        );
+                      }
 
-                    return LayoutBuilder(
-                      builder: (context, constraints) {
-                        final topPadding = _showStoryBar ? 200.0 : 20.0;
-                        return RefreshIndicator(
-                          onRefresh: () async {
-                            _feedBloc.add(
-                              RefreshFeedPosts(
-                                feedType: _feedBloc.currentFeedType,
-                                contentFilter: _feedBloc.currentContentFilter,
+                      if (state is FeedError) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const HeroIcon(
+                                HeroIcons.exclamationTriangle,
+                                size: 64,
+                                color: Colors.grey,
                               ),
-                            );
-                            await Future.delayed(
-                              const Duration(milliseconds: 500),
-                            );
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
-                            margin: EdgeInsets.only(top: topPadding),
-                            height: constraints.maxHeight - topPadding,
-                            child: PageView.builder(
-                              controller: _pageController,
-                              scrollDirection: Axis.vertical,
-                              itemCount: state.posts.length,
-                              itemBuilder: (context, index) {
-                                final post = state.posts[index];
-                                return FeedPostCard(post: post);
-                              },
-                            ),
+                              const SizedBox(height: AppSizes.md),
+                              Text(
+                                'Error loading feed',
+                                style: Theme.of(
+                                  context,
+                                ).textTheme.headlineMedium,
+                              ),
+                              const SizedBox(height: AppSizes.md),
+                              Text(state.message),
+                              const SizedBox(height: AppSizes.lg),
+                              ElevatedButton(
+                                onPressed: () {
+                                  _feedBloc.add(const RefreshFeedPosts());
+                                },
+                                child: const Text('Retry'),
+                              ),
+                            ],
                           ),
                         );
-                      },
-                    );
-                  }
+                      }
 
-                  return const SizedBox.shrink();
-                },
-              ),
+                      if (state is FeedLoaded) {
+                        if (state.posts.isEmpty) {
+                          return Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(height: AppSizes.xxl),
+                                const HeroIcon(
+                                  HeroIcons.documentText,
+                                  size: 64,
+                                  color: Colors.grey,
+                                ),
+                                const SizedBox(height: AppSizes.md),
+                                Text(
+                                  'No posts yet',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.headlineMedium,
+                                ),
+                                const SizedBox(height: AppSizes.sm),
+                                const Text(
+                                  'Be the first to share something!',
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
 
-              // Story Bar - Positioned at top, shows/hides on scroll
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                top: _showStoryBar ? 120 : -200,
-                left: 0,
-                right: 0,
-                child: const FeedStoryBar(),
-              ),
+                        return LayoutBuilder(
+                          builder: (context, constraints) {
+                            final topPadding = _showStoryBar ? 200.0 : 20.0;
+                            return RefreshIndicator(
+                              onRefresh: () async {
+                                _feedBloc.add(
+                                  RefreshFeedPosts(
+                                    feedType: _feedBloc.currentFeedType,
+                                    contentFilter:
+                                        _feedBloc.currentContentFilter,
+                                  ),
+                                );
+                                await Future.delayed(
+                                  const Duration(milliseconds: 500),
+                                );
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 300),
+                                curve: Curves.easeInOut,
+                                margin: EdgeInsets.only(top: topPadding),
+                                height: constraints.maxHeight - topPadding,
+                                child: PageView.builder(
+                                  controller: _pageController,
+                                  scrollDirection: Axis.vertical,
+                                  itemCount: state.posts.length,
+                                  itemBuilder: (context, index) {
+                                    final post = state.posts[index];
+                                    return FeedPostCard(post: post);
+                                  },
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      }
 
-              // Filter Chips - Always visible, moves up when story bar hides
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeInOut,
-                top: _showStoryBar ? 240 : 120,
-                left: 0,
-                right: 0,
-                child: FeedFilterChips(feedBloc: _feedBloc),
+                      return const SizedBox.shrink();
+                    },
+                  ),
+
+                  // Story Bar - Positioned at top, shows/hides on scroll
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    top: _showStoryBar ? 120 : -200,
+                    left: 0,
+                    right: 0,
+                    child: const FeedStoryBar(),
+                  ),
+
+                  // Filter Chips - Always visible, moves up when story bar hides
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    top: _showStoryBar ? 240 : 120,
+                    left: 0,
+                    right: 0,
+                    child: FeedFilterChips(feedBloc: _feedBloc),
+                  ),
+                ],
               ),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );

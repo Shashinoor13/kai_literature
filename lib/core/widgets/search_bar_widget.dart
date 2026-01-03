@@ -29,7 +29,6 @@ class SearchBarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isIOS = defaultTargetPlatform == TargetPlatform.iOS;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.symmetric(
@@ -37,7 +36,7 @@ class SearchBarWidget extends StatelessWidget {
         vertical: AppSizes.sm,
       ),
       decoration: BoxDecoration(
-        color: isDark ? Colors.grey[800] : Colors.grey[200],
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(isIOS ? 10 : 20),
       ),
       child: Row(
@@ -45,7 +44,7 @@ class SearchBarWidget extends StatelessWidget {
           HeroIcon(
             HeroIcons.magnifyingGlass,
             style: HeroIconStyle.outline,
-            color: Colors.grey[600],
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
             size: 20,
           ),
           const SizedBox(width: AppSizes.sm),
@@ -58,12 +57,12 @@ class SearchBarWidget extends StatelessWidget {
               onTap: onTap,
               style: TextStyle(
                 fontSize: 16,
-                color: isDark ? Colors.white : Colors.black87,
+                color: Theme.of(context).colorScheme.onSurface,
               ),
               decoration: InputDecoration(
                 hintText: hintText,
                 hintStyle: TextStyle(
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
                   fontSize: 16,
                   fontWeight: FontWeight.normal,
                 ),
