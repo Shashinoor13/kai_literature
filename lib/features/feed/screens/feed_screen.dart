@@ -32,6 +32,7 @@ class _FeedScreenState extends State<FeedScreen> {
   late FeedBloc _feedBloc;
   late PageController _pageController;
   bool _showStoryBar = true;
+  bool _isUiHidden = false; // Clear mode state
   double _previousPage = 0.0;
 
   @override
@@ -53,6 +54,9 @@ class _FeedScreenState extends State<FeedScreen> {
   void _onPageScroll() {
     final page = _pageController.page ?? 0;
 
+    // Don't auto-hide story bar if in clear mode
+    if (_isUiHidden) return;
+
     // Detect scroll direction
     if (page > _previousPage) {
       // Scrolling down - hide story bar
@@ -71,6 +75,16 @@ class _FeedScreenState extends State<FeedScreen> {
     }
 
     _previousPage = page;
+  }
+
+  /// Toggle clear mode - hide/show all UI elements
+  void _toggleClearMode() {
+    setState(() {
+      _isUiHidden = !_isUiHidden;
+      // When entering clear mode, hide story bar
+      // When exiting, show story bar
+      _showStoryBar = !_isUiHidden;
+    });
   }
 
   @override
@@ -105,18 +119,20 @@ class _FeedScreenState extends State<FeedScreen> {
 
             return Scaffold(
               extendBodyBehindAppBar: true,
-              appBar: AppBar(
-                backgroundColor: Colors.transparent,
-                elevation: 0,
-                scrolledUnderElevation: 0,
-                title: GestureDetector(
-                  onTap: () => context.push('/search'),
-                  child: const SearchBarWidget(
-                    hintText: 'Search posts, users...',
-                    enabled: false,
-                  ),
-                ),
-              ),
+              appBar: _isUiHidden
+                  ? null
+                  : AppBar(
+                      backgroundColor: Colors.transparent,
+                      elevation: 0,
+                      scrolledUnderElevation: 0,
+                      title: GestureDetector(
+                        onTap: () => context.push('/search'),
+                        child: const SearchBarWidget(
+                          hintText: 'Search posts, users...',
+                          enabled: false,
+                        ),
+                      ),
+                    ),
               body: Stack(
                 children: [
                   // Background Image (if set)
@@ -224,7 +240,11 @@ class _FeedScreenState extends State<FeedScreen> {
                                   itemCount: state.posts.length,
                                   itemBuilder: (context, index) {
                                     final post = state.posts[index];
-                                    return FeedPostCard(post: post);
+                                    return FeedPostCard(
+                                      post: post,
+                                      isUiHidden: _isUiHidden,
+                                      onTap: _toggleClearMode,
+                                    );
                                   },
                                 ),
                               ),
@@ -238,24 +258,26 @@ class _FeedScreenState extends State<FeedScreen> {
                   ),
 
                   // Story Bar - Positioned at top, shows/hides on scroll
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    top: _showStoryBar ? 120 : -200,
-                    left: 0,
-                    right: 0,
-                    child: const FeedStoryBar(),
-                  ),
+                  if (!_isUiHidden)
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      top: _showStoryBar ? 120 : -200,
+                      left: 0,
+                      right: 0,
+                      child: const FeedStoryBar(),
+                    ),
 
                   // Filter Chips - Always visible, moves up when story bar hides
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    top: _showStoryBar ? 240 : 120,
-                    left: 0,
-                    right: 0,
-                    child: FeedFilterChips(feedBloc: _feedBloc),
-                  ),
+                  if (!_isUiHidden)
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      top: _showStoryBar ? 240 : 120,
+                      left: 0,
+                      right: 0,
+                      child: FeedFilterChips(feedBloc: _feedBloc),
+                    ),
                 ],
               ),
             );

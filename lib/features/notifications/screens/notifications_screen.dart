@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:go_router/go_router.dart';
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/core/constants/colors.dart';
 import 'package:literature/features/notifications/bloc/notification_bloc.dart';
@@ -220,6 +221,41 @@ class _NotificationItem extends StatelessWidget {
 
   const _NotificationItem({required this.notification, required this.userId});
 
+  /// Handle navigation based on notification type
+  void _handleNotificationNavigation(BuildContext context, NotificationModel notification) {
+    switch (notification.type) {
+      case NotificationType.like:
+      case NotificationType.comment:
+        // Navigate to post detail if postId exists
+        if (notification.postId != null && notification.postId!.isNotEmpty) {
+          context.push('/post/${notification.postId}');
+        }
+        break;
+
+      case NotificationType.follow:
+        // Navigate to user profile
+        context.push('/user/${notification.fromUserId}');
+        break;
+
+      case NotificationType.message:
+        // Navigate to chat screen (would need conversationId)
+        // For now, navigate to user profile
+        context.push('/user/${notification.fromUserId}');
+        break;
+
+      case NotificationType.storyView:
+      case NotificationType.storyReaction:
+        // Navigate to user profile who viewed/reacted
+        context.push('/user/${notification.fromUserId}');
+        break;
+    }
+  }
+
+  /// Navigate to user profile when tapping on profile picture
+  void _navigateToUserProfile(BuildContext context) {
+    context.push('/user/${notification.fromUserId}');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dismissible(
@@ -245,8 +281,8 @@ class _NotificationItem extends StatelessWidget {
             );
           }
 
-          // TODO: Navigate based on notification type
-          // You can implement navigation to posts or user profiles here
+          // Navigate based on notification type
+          _handleNotificationNavigation(context, notification);
         },
         child: Container(
           color: notification.isRead ? Colors.transparent : AppColors.gray100,
@@ -254,26 +290,29 @@ class _NotificationItem extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Profile Image
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: AppColors.gray300,
-                backgroundImage:
-                    notification.fromUserProfileImage != null &&
-                        notification.fromUserProfileImage!.isNotEmpty
-                    ? CachedNetworkImageProvider(
-                        notification.fromUserProfileImage!,
-                      )
-                    : null,
-                child:
-                    notification.fromUserProfileImage == null ||
-                        notification.fromUserProfileImage!.isEmpty
-                    ? const Icon(
-                        Icons.person_outline,
-                        size: AppSizes.iconMd,
-                        color: AppColors.gray500,
-                      )
-                    : null,
+              // Profile Image (tappable to navigate to user profile)
+              GestureDetector(
+                onTap: () => _navigateToUserProfile(context),
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppColors.gray300,
+                  backgroundImage:
+                      notification.fromUserProfileImage != null &&
+                          notification.fromUserProfileImage!.isNotEmpty
+                      ? CachedNetworkImageProvider(
+                          notification.fromUserProfileImage!,
+                        )
+                      : null,
+                  child:
+                      notification.fromUserProfileImage == null ||
+                          notification.fromUserProfileImage!.isEmpty
+                      ? const Icon(
+                          Icons.person_outline,
+                          size: AppSizes.iconMd,
+                          color: AppColors.gray500,
+                        )
+                      : null,
+                ),
               ),
               const SizedBox(width: AppSizes.md),
               // Notification Content

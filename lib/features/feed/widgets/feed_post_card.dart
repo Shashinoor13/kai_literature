@@ -21,10 +21,14 @@ import 'package:literature/repositories/post_repository.dart';
 /// Full-screen post card with TikTok-style interactions
 class FeedPostCard extends StatefulWidget {
   final PostModel post;
+  final bool isUiHidden;
+  final VoidCallback onTap;
 
   const FeedPostCard({
     super.key,
     required this.post,
+    this.isUiHidden = false,
+    required this.onTap,
   });
 
   @override
@@ -335,6 +339,10 @@ class _FeedPostCardState extends State<FeedPostCard>
                                    themeState.config.backgroundImagePath!.isNotEmpty;
 
         return GestureDetector(
+          onTap: () {
+            // Single tap toggles clear mode
+            widget.onTap();
+          },
           onDoubleTap: () {
             // Trigger double-tap animation
             _doubleTapAnimationController.forward(from: 0);
@@ -357,35 +365,37 @@ class _FeedPostCardState extends State<FeedPostCard>
                 // Post Content - Centered
                 FeedPostContent(post: widget.post),
 
-                // Author Info - Bottom Left
-                Positioned(
-                  bottom: 20,
-                  left: AppSizes.md,
-                  right: 80,
-                  child: FeedPostAuthorInfo(
-                    author: _author,
-                    post: widget.post,
+                // Author Info - Bottom Left (hidden in clear mode)
+                if (!widget.isUiHidden)
+                  Positioned(
+                    bottom: 20,
+                    left: AppSizes.md,
+                    right: 80,
+                    child: FeedPostAuthorInfo(
+                      author: _author,
+                      post: widget.post,
+                    ),
                   ),
-                ),
 
-                // Interaction Buttons - Right Side
-                Positioned(
-                  right: AppSizes.sm,
-                  bottom: 20,
-                  child: FeedPostInteractions(
-                    isLiked: _interactionState.isLiked,
-                    isFavorited: _interactionState.isFavorited,
-                    likesCount: _interactionState.likesCount,
-                    commentsCount: _interactionState.commentsCount,
-                    sharesCount: _interactionState.sharesCount,
-                    onLikeTap: _toggleLike,
-                    onCommentTap: _openComments,
-                    onFavoriteTap: _toggleFavorite,
-                    onShareTap: _sharePost,
-                    onOptionsTap: _showOptionsMenu,
-                    likeAnimation: _likeScaleAnimation,
+                // Interaction Buttons - Right Side (hidden in clear mode)
+                if (!widget.isUiHidden)
+                  Positioned(
+                    right: AppSizes.sm,
+                    bottom: 20,
+                    child: FeedPostInteractions(
+                      isLiked: _interactionState.isLiked,
+                      isFavorited: _interactionState.isFavorited,
+                      likesCount: _interactionState.likesCount,
+                      commentsCount: _interactionState.commentsCount,
+                      sharesCount: _interactionState.sharesCount,
+                      onLikeTap: _toggleLike,
+                      onCommentTap: _openComments,
+                      onFavoriteTap: _toggleFavorite,
+                      onShareTap: _sharePost,
+                      onOptionsTap: _showOptionsMenu,
+                      likeAnimation: _likeScaleAnimation,
+                    ),
                   ),
-                ),
 
                 // Double-tap heart animation overlay
                 Center(

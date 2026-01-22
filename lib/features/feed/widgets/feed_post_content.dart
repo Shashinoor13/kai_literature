@@ -85,8 +85,31 @@ class _FeedPostContentState extends State<FeedPostContent> {
     });
   }
 
+  /// Calculate responsive font sizes based on screen height
+  double _getTitleFontSize(double screenHeight) {
+    // Base font size: 18px for normal screens (>700px height)
+    // Scale down for smaller screens
+    if (screenHeight > 700) return 18;
+    if (screenHeight > 600) return 16;
+    if (screenHeight > 500) return 14;
+    return 13;
+  }
+
+  double _getContentFontSize(double screenHeight) {
+    // Base font size: 15px for normal screens (>700px height)
+    // Scale down for smaller screens
+    if (screenHeight > 700) return 15;
+    if (screenHeight > 600) return 14;
+    if (screenHeight > 500) return 13;
+    return 12;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final titleFontSize = _getTitleFontSize(screenHeight);
+    final contentFontSize = _getContentFontSize(screenHeight);
+
     return Stack(
       children: [
         // Paginated content
@@ -116,7 +139,7 @@ class _FeedPostContentState extends State<FeedPostContent> {
                           widget.post.title,
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface,
-                            fontSize: 18,
+                            fontSize: titleFontSize,
                             fontWeight: FontWeight.bold,
                             height: 1.4,
                           ),
@@ -128,7 +151,7 @@ class _FeedPostContentState extends State<FeedPostContent> {
                         _contentChunks[index],
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: 15,
+                          fontSize: contentFontSize,
                           fontWeight: FontWeight.w400,
                           height: 1.5,
                         ),
