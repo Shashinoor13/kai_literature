@@ -61,9 +61,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     final uri = Uri.parse(url);
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open $url')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not open $url')));
       }
     }
   }
@@ -102,7 +102,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!_acceptedTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please accept the Terms of Service and Privacy Policy'),
+          content: Text(
+            'Please accept the Terms of Service and Privacy Policy',
+          ),
         ),
       );
       return;
@@ -111,7 +113,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!_dataProcessingConsent) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please consent to data processing to continue'),
+          content: Text(
+            'Please consent to data processing to continue',
+          ),
         ),
       );
       return;
@@ -119,13 +123,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
     if (_formKey.currentState!.validate()) {
       context.read<AuthBloc>().add(
-            SignUpRequested(
-              email: _emailController.text.trim(),
-              password: _passwordController.text,
-              username: _usernameController.text.trim(),
-              dateOfBirth: _dateOfBirth,
-            ),
-          );
+        SignUpRequested(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          username: _usernameController.text.trim(),
+          dateOfBirth: _dateOfBirth,
+        ),
+      );
     }
   }
 
@@ -282,7 +286,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           ),
                           onPressed: () {
                             setState(() {
-                              _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                              _isConfirmPasswordVisible =
+                                  !_isConfirmPasswordVisible;
                             });
                           },
                         ),
@@ -320,10 +325,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     : AppColors.white,
                               ),
                             ),
-                            const HeroIcon(
-                              HeroIcons.calendar,
-                              size: 20,
-                            ),
+                            const HeroIcon(HeroIcons.calendar, size: 20),
                           ],
                         ),
                       ),
@@ -360,7 +362,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     ),
                                     recognizer: TapGestureRecognizer()
                                       ..onTap = () => _launchURL(
-                                          'https://thekaiverse.com/terms'),
+                                        'https://thekaiverse.com/terms',
+                                      ),
                                   ),
                                   const TextSpan(text: ' and '),
                                   TextSpan(
@@ -371,7 +374,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     ),
                                     recognizer: TapGestureRecognizer()
                                       ..onTap = () => _launchURL(
-                                          'https://thekaiverse.com/privacy'),
+                                        'https://thekaiverse.com/privacy',
+                                      ),
                                   ),
                                 ],
                               ),

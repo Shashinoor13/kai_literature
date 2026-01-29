@@ -19,9 +19,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialize Firebase
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Set preferred orientations (portrait only for MVP)
   await SystemChrome.setPreferredOrientations([
@@ -67,7 +65,8 @@ class _LiteratureAppState extends State<LiteratureApp> {
     // Initialize BLoCs (auth check happens in AuthBloc constructor)
     _authBloc = AuthBloc(authRepository: _authRepository);
     _messagingBloc = MessagingBloc(messagingRepository: _messagingRepository);
-    _themeBloc = ThemeBloc(themeRepository: _themeRepository)..add(const LoadTheme());
+    _themeBloc = ThemeBloc(themeRepository: _themeRepository)
+      ..add(const LoadTheme());
 
     // Initialize router
     _appRouter = AppRouter(authBloc: _authBloc);
@@ -87,21 +86,17 @@ class _LiteratureAppState extends State<LiteratureApp> {
     return MultiRepositoryProvider(
       providers: [
         RepositoryProvider<AuthRepository>.value(value: _authRepository),
-        RepositoryProvider<MessagingRepository>.value(value: _messagingRepository),
+        RepositoryProvider<MessagingRepository>.value(
+          value: _messagingRepository,
+        ),
         RepositoryProvider<PostRepository>.value(value: _postRepository),
         RepositoryProvider<ThemeRepository>.value(value: _themeRepository),
       ],
       child: MultiBlocProvider(
         providers: [
-          BlocProvider<AuthBloc>.value(
-            value: _authBloc,
-          ),
-          BlocProvider<MessagingBloc>.value(
-            value: _messagingBloc,
-          ),
-          BlocProvider<ThemeBloc>.value(
-            value: _themeBloc,
-          ),
+          BlocProvider<AuthBloc>.value(value: _authBloc),
+          BlocProvider<MessagingBloc>.value(value: _messagingBloc),
+          BlocProvider<ThemeBloc>.value(value: _themeBloc),
         ],
         child: BlocBuilder<ThemeBloc, ThemeState>(
           builder: (context, themeState) {

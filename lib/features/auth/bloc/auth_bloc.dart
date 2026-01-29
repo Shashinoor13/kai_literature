@@ -12,10 +12,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
   StreamSubscription<User?>? _authStateSubscription;
 
-  AuthBloc({
-    required AuthRepository authRepository,
-  })  : _authRepository = authRepository,
-        super(AuthInitial()) {
+  AuthBloc({required AuthRepository authRepository})
+    : _authRepository = authRepository,
+      super(AuthInitial()) {
     // Register event handlers
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<SignInRequested>(_onSignInRequested);
@@ -28,11 +27,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     add(AuthCheckRequested());
 
     // Listen to auth state changes
-    _authStateSubscription = _authRepository.authStateChanges.listen(
-      (user) {
-        add(AuthCheckRequested());
-      },
-    );
+    _authStateSubscription = _authRepository.authStateChanges.listen((user) {
+      add(AuthCheckRequested());
+    });
   }
 
   /// Check authentication state
@@ -57,6 +54,27 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(Unauthenticated());
     }
   }
+  // Future<void> _onAuthCheckRequested(
+  //   AuthCheckRequested event,
+  //   Emitter<AuthState> emit,
+  // ) async {
+  //   emit(AuthLoading());
+
+  //   final currentUser = _authRepository.currentUser;
+
+  //   if (currentUser == null) {
+  //     emit(Unauthenticated());
+  //     return;
+  //   }
+
+  //   try {
+  //     final userData = await _authRepository.getUserData(currentUser.uid);
+  //     emit(Authenticated(userData));
+  //   } catch (e) {
+  //     emit(AuthError('Failed to load user data'));
+  //     // optionally still keep user authenticated
+  //   }
+  // }
 
   /// Handle sign in
   Future<void> _onSignInRequested(

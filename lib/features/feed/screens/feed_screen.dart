@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:literature/core/constants/sizes.dart';
+import 'package:literature/core/storages/gloabl/value.dart';
 import 'package:literature/core/widgets/search_bar_widget.dart';
 import 'package:literature/features/feed/bloc/feed_bloc.dart';
 import 'package:literature/features/feed/bloc/feed_event.dart';
@@ -34,6 +35,7 @@ class _FeedScreenState extends State<FeedScreen> {
   bool _showStoryBar = true;
   bool _isUiHidden = false; // Clear mode state
   double _previousPage = 0.0;
+  bool _isReadingMode = false;
 
   @override
   void initState() {
@@ -95,6 +97,24 @@ class _FeedScreenState extends State<FeedScreen> {
     super.dispose();
   }
 
+  // Color _getDefaultBackgroundColor(BuildContext context) {
+  //   final filter = GlobalState.instance.selectedContentFilter;
+  //   const Color parchmentLight = Color.fromRGBO(240, 215, 181, 1);
+  //   const Color parchmentBase = Color.fromRGBO(226, 194, 151, 1);
+  //   const Color parchmentDark = Color.fromRGBO(212, 171, 117, 1);
+
+  //   switch (filter) {
+  //     case ContentFilter.poem:
+  //       // Return a single color from the gradient, e.g., the base color
+  //       return parchmentBase;
+  //     case ContentFilter.novel:
+  //       return Colors.green.shade50;
+  //     case ContentFilter.all:
+  //     default:
+  //       return Theme.of(context).colorScheme.surface;
+  //   }
+  // }
+
   @override
   Widget build(BuildContext context) {
     return NotificationListener<FeedRefreshNotification>(
@@ -136,7 +156,8 @@ class _FeedScreenState extends State<FeedScreen> {
               body: Stack(
                 children: [
                   // Background Image (if set)
-                  if (backgroundImagePath != null && backgroundImagePath.isNotEmpty)
+                  if (backgroundImagePath != null &&
+                      backgroundImagePath.isNotEmpty)
                     Positioned.fill(
                       child: Image.file(
                         File(backgroundImagePath),

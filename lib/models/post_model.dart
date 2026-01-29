@@ -99,19 +99,19 @@ class PostModel extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        authorId,
-        title,
-        content,
-        category,
-        backgroundImageUrl,
-        likesCount,
-        commentsCount,
-        sharesCount,
-        favoritesCount,
-        trendingScore,
-        status,
-        suspendedAt,
-        createdAt,
-      ];
+    id,
+    authorId,
+    title,
+    content,
+    category,
+    backgroundImageUrl,
+    likesCount,
+    commentsCount,
+    sharesCount,
+    favoritesCount,
+    trendingScore,
+    status,
+    suspendedAt,
+    createdAt,
+  ];
 }

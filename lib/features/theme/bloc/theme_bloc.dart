@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:literature/core/storages/gloabl/value.dart';
 import 'package:literature/core/theme/app_theme.dart';
 import 'package:literature/core/theme/theme_model.dart';
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/core/constants/text_styles.dart';
+import 'package:literature/features/feed/bloc/feed_event.dart';
 import 'package:literature/features/theme/bloc/theme_event.dart';
 import 'package:literature/features/theme/bloc/theme_state.dart';
 import 'package:literature/repositories/theme_repository.dart';
@@ -18,6 +20,23 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
     on<UpdateCustomTheme>(_onUpdateCustomTheme);
     on<SetBackgroundImage>(_onSetBackgroundImage);
     on<ResetTheme>(_onResetTheme);
+  }
+  Color _getDefaultBackgroundColor(BuildContext context) {
+    final filter = GlobalState.instance.selectedContentFilter;
+    const Color parchmentLight = Color.fromRGBO(240, 215, 181, 1);
+    const Color parchmentBase = Color.fromRGBO(226, 194, 151, 1);
+    const Color parchmentDark = Color.fromRGBO(212, 171, 117, 1);
+
+    switch (filter) {
+      case ContentFilter.poem:
+        // Return a single color from the gradient, e.g., the base color
+        return parchmentBase;
+      case ContentFilter.novel:
+        return Colors.green.shade50;
+      case ContentFilter.all:
+      default:
+        return Theme.of(context).colorScheme.surface;
+    }
   }
 
   /// Load saved theme or use default
@@ -115,7 +134,9 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
       if (currentState is! ThemeLoaded) return;
 
       // Convert empty string to null
-      final imagePath = event.imagePath?.isEmpty == true ? null : event.imagePath;
+      final imagePath = event.imagePath?.isEmpty == true
+          ? null
+          : event.imagePath;
 
       final newConfig = currentState.config.copyWith(
         backgroundImagePath: imagePath,
@@ -130,10 +151,7 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
   }
 
   /// Reset theme to default dark
-  Future<void> _onResetTheme(
-    ResetTheme event,
-    Emitter<ThemeState> emit,
-  ) async {
+  Future<void> _onResetTheme(ResetTheme event, Emitter<ThemeState> emit) async {
     try {
       await themeRepository.clearThemeConfig();
       final config = ThemeConfig.defaultDark();
@@ -211,10 +229,7 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryColor,
-          side: BorderSide(
-            color: primaryColor,
-            width: AppSizes.borderWidth,
-          ),
+          side: BorderSide(color: primaryColor, width: AppSizes.borderWidth),
           minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppSizes.radiusSm),
@@ -253,7 +268,9 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
             width: AppSizes.borderWidth,
           ),
         ),
-        hintStyle: AppTextStyles.body.copyWith(color: txtColor.withValues(alpha: 0.5)),
+        hintStyle: AppTextStyles.body.copyWith(
+          color: txtColor.withValues(alpha: 0.5),
+        ),
         contentPadding: const EdgeInsets.symmetric(
           vertical: AppSizes.sm,
           horizontal: AppSizes.md,
@@ -274,10 +291,7 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
         color: txtColor.withValues(alpha: 0.2),
         thickness: AppSizes.borderWidth,
       ),
-      iconTheme: IconThemeData(
-        color: txtColor,
-        size: AppSizes.iconMd,
-      ),
+      iconTheme: IconThemeData(color: txtColor, size: AppSizes.iconMd),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
         backgroundColor: bgColor,
         selectedItemColor: primaryColor,

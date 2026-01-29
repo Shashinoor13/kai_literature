@@ -45,6 +45,7 @@ dependencies:
   # Icons
   cupertino_icons: ^1.0.8
   heroicons: ^0.11.0
+  firebase_app_check: ^0.3.2+10
 
 dev_dependencies:
   flutter_test:

@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:literature/core/constants/sizes.dart';
+import 'package:literature/core/storages/gloabl/value.dart';
 import 'package:literature/core/widgets/report_post_dialog.dart';
 import 'package:literature/core/services/share_service.dart';
 import 'package:literature/features/auth/bloc/auth_bloc.dart';
 import 'package:literature/features/auth/bloc/auth_state.dart';
+import 'package:literature/features/feed/bloc/feed_bloc.dart';
+import 'package:literature/features/feed/bloc/feed_event.dart';
+import 'package:literature/features/feed/bloc/feed_state.dart';
 import 'package:literature/features/theme/bloc/theme_bloc.dart';
 import 'package:literature/features/theme/bloc/theme_state.dart' as theme_state;
 import 'package:literature/features/feed/screens/comment_screen.dart';
@@ -38,16 +42,19 @@ class FeedPostCard extends StatefulWidget {
 class _FeedPostCardState extends State<FeedPostCard>
     with TickerProviderStateMixin {
   UserModel? _author;
+
   late PostInteractionState _interactionState;
   late AnimationController _likeAnimationController;
   late Animation<double> _likeScaleAnimation;
   late AnimationController _doubleTapAnimationController;
   late Animation<double> _doubleTapScaleAnimation;
   late Animation<double> _doubleTapOpacityAnimation;
+  // final ContentFilter _selectedContentFilter = ContentFilter.all;
 
   @override
   void initState() {
     super.initState();
+
     _interactionState = PostInteractionState.initial(
       likesCount: widget.post.likesCount,
       commentsCount: widget.post.commentsCount,
@@ -55,47 +62,49 @@ class _FeedPostCardState extends State<FeedPostCard>
     );
     _loadAuthorData();
     _checkInteractions();
-
     // Like button animation
     _likeAnimationController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    _likeScaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
-    ]).animate(
-      CurvedAnimation(
-        parent: _likeAnimationController,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _likeScaleAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.3), weight: 50),
+          TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0), weight: 50),
+        ]).animate(
+          CurvedAnimation(
+            parent: _likeAnimationController,
+            curve: Curves.easeInOut,
+          ),
+        );
 
     // Double-tap heart animation
     _doubleTapAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _doubleTapScaleAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.2), weight: 40),
-      TweenSequenceItem(tween: Tween(begin: 1.2, end: 1.0), weight: 30),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 30),
-    ]).animate(
-      CurvedAnimation(
-        parent: _doubleTapAnimationController,
-        curve: Curves.easeOut,
-      ),
-    );
-    _doubleTapOpacityAnimation = TweenSequence<double>([
-      TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 20),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 50),
-      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 30),
-    ]).animate(
-      CurvedAnimation(
-        parent: _doubleTapAnimationController,
-        curve: Curves.easeInOut,
-      ),
-    );
+    _doubleTapScaleAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.2), weight: 40),
+          TweenSequenceItem(tween: Tween(begin: 1.2, end: 1.0), weight: 30),
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 30),
+        ]).animate(
+          CurvedAnimation(
+            parent: _doubleTapAnimationController,
+            curve: Curves.easeOut,
+          ),
+        );
+    _doubleTapOpacityAnimation =
+        TweenSequence<double>([
+          TweenSequenceItem(tween: Tween(begin: 0.0, end: 1.0), weight: 20),
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.0), weight: 50),
+          TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.0), weight: 30),
+        ]).animate(
+          CurvedAnimation(
+            parent: _doubleTapAnimationController,
+            curve: Curves.easeInOut,
+          ),
+        );
   }
 
   @override
@@ -108,8 +117,8 @@ class _FeedPostCardState extends State<FeedPostCard>
   Future<void> _loadAuthorData() async {
     try {
       final author = await context.read<AuthRepository>().getUserData(
-            widget.post.authorId,
-          );
+        widget.post.authorId,
+      );
       if (mounted) {
         setState(() {
           _author = author;
@@ -183,9 +192,9 @@ class _FeedPostCardState extends State<FeedPostCard>
         setState(() {
           _interactionState = _interactionState.toggleLike();
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     }
   }
@@ -220,9 +229,9 @@ class _FeedPostCardState extends State<FeedPostCard>
         setState(() {
           _interactionState = _interactionState.toggleFavorite();
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     }
   }
@@ -302,17 +311,15 @@ class _FeedPostCardState extends State<FeedPostCard>
         onReport: (reason, details) async {
           try {
             await context.read<PostRepository>().reportPost(
-                  postId: widget.post.id,
-                  reporterId: authState.user.id,
-                  reason: reason,
-                  additionalDetails: details,
-                );
+              postId: widget.post.id,
+              reporterId: authState.user.id,
+              reason: reason,
+              additionalDetails: details,
+            );
 
             if (mounted) {
               ScaffoldMessenger.of(this.context).showSnackBar(
-                const SnackBar(
-                  content: Text('Report submitted successfully'),
-                ),
+                const SnackBar(content: Text('Report submitted successfully')),
               );
             }
           } catch (e) {
@@ -329,14 +336,16 @@ class _FeedPostCardState extends State<FeedPostCard>
     );
   }
 
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeBloc, theme_state.ThemeState>(
       builder: (context, themeState) {
         // Check if there's a background image
-        final hasBackgroundImage = themeState is theme_state.ThemeLoaded &&
-                                   themeState.config.backgroundImagePath != null &&
-                                   themeState.config.backgroundImagePath!.isNotEmpty;
+        final hasBackgroundImage =
+            themeState is theme_state.ThemeLoaded &&
+            themeState.config.backgroundImagePath != null &&
+            themeState.config.backgroundImagePath!.isNotEmpty;
 
         return GestureDetector(
           onTap: () {
@@ -358,12 +367,16 @@ class _FeedPostCardState extends State<FeedPostCard>
             decoration: BoxDecoration(
               color: hasBackgroundImage
                   ? Colors.transparent
+                  // : _getDefaultBackgroundColor(context),
                   : Theme.of(context).colorScheme.surface,
             ),
             child: Stack(
               children: [
                 // Post Content - Centered
-                FeedPostContent(post: widget.post),
+                FeedPostContent(
+                  post: widget.post,
+                  isUiHidden: widget.isUiHidden,
+                ),
 
                 // Author Info - Bottom Left (hidden in clear mode)
                 if (!widget.isUiHidden)
@@ -374,6 +387,9 @@ class _FeedPostCardState extends State<FeedPostCard>
                     child: FeedPostAuthorInfo(
                       author: _author,
                       post: widget.post,
+                      showCategory:
+                          GlobalState.instance.selectedContentFilter ==
+                          ContentFilter.all,
                     ),
                   ),
 

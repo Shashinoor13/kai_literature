@@ -15,11 +15,12 @@ import 'package:literature/repositories/auth_repository.dart';
 class FeedPostAuthorInfo extends StatefulWidget {
   final UserModel? author;
   final PostModel post;
-
+  final bool showCategory;
   const FeedPostAuthorInfo({
     super.key,
     required this.author,
     required this.post,
+    required this.showCategory,
   });
 
   @override
@@ -59,9 +60,9 @@ class _FeedPostAuthorInfoState extends State<FeedPostAuthorInfo> {
 
     try {
       final isFollowing = await context.read<AuthRepository>().isFollowing(
-            followerId: authState.user.id,
-            followingId: widget.author!.id,
-          );
+        followerId: authState.user.id,
+        followingId: widget.author!.id,
+      );
 
       if (mounted) {
         setState(() {
@@ -107,9 +108,9 @@ class _FeedPostAuthorInfoState extends State<FeedPostAuthorInfo> {
         setState(() {
           _isLoading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${e.toString()}')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     }
   }
@@ -126,24 +127,25 @@ class _FeedPostAuthorInfoState extends State<FeedPostAuthorInfo> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Category Badge at top
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.sm,
-            vertical: AppSizes.xs,
-          ),
-          decoration: BoxDecoration(
-            color: CategoryUtils.getCategoryColor(widget.post.category),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            widget.post.category.toUpperCase(),
-            style: TextStyle(
-              color: CategoryUtils.getCategoryTextColor(widget.post.category),
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+        if (widget.showCategory)
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.sm,
+              vertical: AppSizes.xs,
+            ),
+            decoration: BoxDecoration(
+              color: CategoryUtils.getCategoryColor(widget.post.category),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              widget.post.category.toUpperCase(),
+              style: TextStyle(
+                color: CategoryUtils.getCategoryTextColor(widget.post.category),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
         const SizedBox(height: AppSizes.sm),
 
         // User Details
@@ -153,14 +155,19 @@ class _FeedPostAuthorInfoState extends State<FeedPostAuthorInfo> {
               onTap: _navigateToProfile,
               child: CircleAvatar(
                 radius: 20,
-                backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-                backgroundImage: widget.author?.profileImageUrl.isNotEmpty == true
+                backgroundColor: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.2),
+                backgroundImage:
+                    widget.author?.profileImageUrl.isNotEmpty == true
                     ? CachedNetworkImageProvider(widget.author!.profileImageUrl)
                     : null,
                 child: widget.author?.profileImageUrl.isEmpty != false
                     ? Text(
                         widget.author?.username[0].toUpperCase() ?? '?',
-                        style: TextStyle(color: Theme.of(context).colorScheme.primary),
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       )
                     : null,
               ),
@@ -195,7 +202,9 @@ class _FeedPostAuthorInfoState extends State<FeedPostAuthorInfo> {
                         ),
                         decoration: BoxDecoration(
                           color: _isFollowing
-                              ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2)
+                              ? Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.2)
                               : Theme.of(context).colorScheme.primary,
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
@@ -235,7 +244,9 @@ class _FeedPostAuthorInfoState extends State<FeedPostAuthorInfo> {
         Text(
           FormatUtils.getTimeAgo(widget.post.createdAt),
           style: TextStyle(
-            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.7),
             fontSize: 12,
           ),
         ),

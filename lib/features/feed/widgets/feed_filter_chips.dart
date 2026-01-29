@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:literature/core/constants/sizes.dart';
+import 'package:literature/core/storages/gloabl/value.dart';
 import 'package:literature/features/feed/bloc/feed_bloc.dart';
 import 'package:literature/features/feed/bloc/feed_event.dart';
 import 'package:literature/features/feed/bloc/feed_state.dart';
@@ -254,7 +255,10 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
     return GestureDetector(
       onTap: () {
         if (_selectedContentFilter != filter) {
+          GlobalState.instance.selectedContentFilter = filter;
+
           widget.feedBloc.add(ChangeContentFilter(filter));
+          setState(() {}); // update UI
         }
       },
       child: Container(

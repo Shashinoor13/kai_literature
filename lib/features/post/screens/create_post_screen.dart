@@ -28,7 +28,8 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
   String _selectedCategory = 'poem';
   File? _backgroundImage;
   final _imagePicker = ImagePicker();
-
+  bool _publishAsDraft = false;
+  bool _publishAsStory = false;
   final List<String> _categories = [
     'poem',
     'story',
@@ -37,7 +38,7 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
     'reflection',
     'research',
     'novel',
-    'other'
+    'other',
   ];
 
   bool get _isEditing => widget.postToEdit != null;
@@ -320,7 +321,45 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                           child: Text(_isEditing ? 'Update Post' : 'Post'),
                         ),
                       ),
+                      SizedBox(height: 10),
+                      // Publish button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _hasContent && !isLoading
+                              ? () {
+                                  // Trigger optional draft/story after main post
+                                  if (_publishAsDraft) {
+                                    context.read<PostBloc>().add(
+                                      SaveDraftRequested(
+                                        title: _titleController.text.trim(),
+                                        content: _contentController.text.trim(),
+                                        category: _selectedCategory,
+                                        backgroundImage: _backgroundImage,
+                                      ),
+                                    );
+                                  }
 
+                                  if (_publishAsStory) {
+                                    context.read<PostBloc>().add(
+                                      UploadStoryRequested(
+                                        title: _titleController.text.trim(),
+                                        content: _contentController.text.trim(),
+                                        category: _selectedCategory,
+                                        backgroundImage: _backgroundImage,
+                                        backgroundColor: 'black',
+                                      ),
+                                    );
+                                  }
+
+                                  // Reset the temporary options
+                                  _publishAsDraft = false;
+                                  _publishAsStory = false;
+                                }
+                              : null,
+                          child: const Text('Publish'),
+                        ),
+                      ),
                       // Only show secondary actions when creating (not editing)
                       if (!_isEditing) ...[
                         const SizedBox(height: AppSizes.sm),
@@ -333,21 +372,30 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                               child: OutlinedButton(
                                 onPressed: _hasContent && !isLoading
                                     ? () {
-                                        context.read<PostBloc>().add(
-                                          SaveDraftRequested(
-                                            title: _titleController.text.trim(),
-                                            content: _contentController.text
-                                                .trim(),
-                                            category: _selectedCategory,
-                                            backgroundImage: _backgroundImage,
-                                          ),
-                                        );
+                                        setState(() {
+                                          _publishAsDraft =
+                                              !_publishAsDraft; // toggle selection
+                                        });
                                       }
                                     : null,
-                                child: const Text('Save Draft'),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(
+                                    color: _publishAsDraft
+                                        ? Theme.of(context).colorScheme.error
+                                        : Theme.of(context).dividerColor,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Save Draft',
+
+                                  style: TextStyle(
+                                    color: _publishAsDraft
+                                        ? Theme.of(context).colorScheme.primary
+                                        : null,
+                                  ),
+                                ),
                               ),
                             ),
-
                             const SizedBox(width: AppSizes.sm),
 
                             // Upload as Story
@@ -355,19 +403,28 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
                               child: OutlinedButton(
                                 onPressed: _hasContent && !isLoading
                                     ? () {
-                                        context.read<PostBloc>().add(
-                                          UploadStoryRequested(
-                                            title: _titleController.text.trim(),
-                                            content: _contentController.text
-                                                .trim(),
-                                            category: _selectedCategory,
-                                            backgroundImage: _backgroundImage,
-                                            backgroundColor: 'black',
-                                          ),
-                                        );
+                                        setState(() {
+                                          _publishAsStory =
+                                              !_publishAsStory; // toggle selection
+                                        });
                                       }
                                     : null,
-                                child: const Text('Story (7d)'),
+                                style: OutlinedButton.styleFrom(
+                                  side: BorderSide(
+                                    color: _publishAsStory
+                                        ? Theme.of(context).colorScheme.primary
+                                        : Theme.of(context).dividerColor,
+                                  ),
+                                ),
+
+                                child: Text(
+                                  'Story (7d)',
+                                  style: TextStyle(
+                                    color: _publishAsStory
+                                        ? Theme.of(context).colorScheme.primary
+                                        : null,
+                                  ),
+                                ),
                               ),
                             ),
                           ],

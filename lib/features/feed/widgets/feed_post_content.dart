@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:literature/core/constants/sizes.dart';
+import 'package:literature/core/storages/gloabl/value.dart';
+import 'package:literature/core/utils/content_theme.dart';
+import 'package:literature/features/feed/bloc/feed_event.dart';
 import 'package:literature/models/post_model.dart';
 
-/// Post content section for feed posts (centered, paginated for long content)
+/// Post content section for feed posts (centered or top-aligned, paginated)
 class FeedPostContent extends StatefulWidget {
   final PostModel post;
+  final bool isUiHidden;
 
   const FeedPostContent({
     super.key,
     required this.post,
+    this.isUiHidden = false,
   });
 
   @override
@@ -35,36 +40,32 @@ class _FeedPostContentState extends State<FeedPostContent> {
   /// Split content into chunks that fit on screen
   void _splitContentIntoChunks() {
     final content = widget.post.content;
-
-    // Optimized chunk size to maximize content while avoiding overflow
-    // Accounts for title space on first page and limited vertical space
-    const int charsPerPage = 280; // Balanced at ~280 chars for good readability
+    const int charsPerPage = 280;
 
     if (content.length <= charsPerPage) {
       _contentChunks = [content];
       return;
     }
 
-    // Split into chunks, trying to break at sentence boundaries
     List<String> chunks = [];
     String remainingText = content;
 
     while (remainingText.length > charsPerPage) {
       int breakPoint = charsPerPage;
 
-      // Try to find a sentence ending (. ! ?) near the break point
       int lastPeriod = remainingText.lastIndexOf('.', breakPoint);
       int lastExclaim = remainingText.lastIndexOf('!', breakPoint);
       int lastQuestion = remainingText.lastIndexOf('?', breakPoint);
 
-      int sentenceEnd = [lastPeriod, lastExclaim, lastQuestion]
-          .reduce((a, b) => a > b ? a : b);
+      int sentenceEnd = [
+        lastPeriod,
+        lastExclaim,
+        lastQuestion,
+      ].reduce((a, b) => a > b ? a : b);
 
-      // If we found a sentence ending within reasonable distance, use it
       if (sentenceEnd > breakPoint * 0.6) {
         breakPoint = sentenceEnd + 1;
       } else {
-        // Otherwise, try to break at a space
         int lastSpace = remainingText.lastIndexOf(' ', breakPoint);
         if (lastSpace > breakPoint * 0.7) {
           breakPoint = lastSpace + 1;
@@ -75,7 +76,6 @@ class _FeedPostContentState extends State<FeedPostContent> {
       remainingText = remainingText.substring(breakPoint).trim();
     }
 
-    // Add the remaining text
     if (remainingText.isNotEmpty) {
       chunks.add(remainingText);
     }
@@ -85,10 +85,7 @@ class _FeedPostContentState extends State<FeedPostContent> {
     });
   }
 
-  /// Calculate responsive font sizes based on screen height
   double _getTitleFontSize(double screenHeight) {
-    // Base font size: 18px for normal screens (>700px height)
-    // Scale down for smaller screens
     if (screenHeight > 700) return 18;
     if (screenHeight > 600) return 16;
     if (screenHeight > 500) return 14;
@@ -96,8 +93,6 @@ class _FeedPostContentState extends State<FeedPostContent> {
   }
 
   double _getContentFontSize(double screenHeight) {
-    // Base font size: 15px for normal screens (>700px height)
-    // Scale down for smaller screens
     if (screenHeight > 700) return 15;
     if (screenHeight > 600) return 14;
     if (screenHeight > 500) return 13;
@@ -112,60 +107,43 @@ class _FeedPostContentState extends State<FeedPostContent> {
 
     return Stack(
       children: [
-        // Paginated content
         PageView.builder(
           controller: _pageController,
           onPageChanged: (index) {
-            setState(() {
-              _currentPage = index;
-            });
+            setState(() => _currentPage = index);
           },
           itemCount: _contentChunks.length,
           itemBuilder: (context, index) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSizes.xl,
-                  vertical: AppSizes.xl,
-                ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Show title only on first page
-                      if (index == 0 && widget.post.title.isNotEmpty) ...[
-                        Text(
-                          widget.post.title,
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface,
-                            fontSize: titleFontSize,
-                            fontWeight: FontWeight.bold,
-                            height: 1.4,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: AppSizes.sm),
-                      ],
-                      Text(
-                        _contentChunks[index],
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface,
-                          fontSize: contentFontSize,
-                          fontWeight: FontWeight.w400,
-                          height: 1.5,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+            final contentWidget = _buildContentColumn(
+              index,
+              titleFontSize,
+              contentFontSize,
             );
+
+            if (widget.isUiHidden) {
+              // Center vertically for full-screen mode
+              return SingleChildScrollView(
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height,
+                  child: Center(child: contentWidget),
+                ),
+              );
+            } else {
+              // Top-aligned for normal mode
+              return Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(
+                    top: AppSizes.xl,
+                    bottom: AppSizes.xl,
+                  ),
+                  child: contentWidget,
+                ),
+              );
+            }
           },
         ),
 
-        // Page counter at bottom - only show if multiple pages
+        // Page counter
         if (_contentChunks.length > 1)
           Positioned(
             bottom: 120,
@@ -178,10 +156,12 @@ class _FeedPostContentState extends State<FeedPostContent> {
                   vertical: AppSizes.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).scaffoldBackgroundColor.withAlpha(128),
                   borderRadius: BorderRadius.circular(AppSizes.radiusSm),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+                    color: Theme.of(context).colorScheme.primary.withAlpha(50),
                     width: 1,
                   ),
                 ),
@@ -196,28 +176,69 @@ class _FeedPostContentState extends State<FeedPostContent> {
               ),
             ),
           ),
+      ],
+    );
+  }
 
-        // Swipe hint - show on first page if there are multiple pages
-        if (_contentChunks.length > 1 && _currentPage == 0)
-          Positioned(
-            right: AppSizes.md,
-            top: 0,
-            bottom: 0,
-            child: Center(
-              child: Container(
-                padding: const EdgeInsets.all(AppSizes.xs),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(AppSizes.radiusSm),
+  Widget _buildContentColumn(
+    int index,
+    double titleFontSize,
+    double contentFontSize,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.xl,
+        vertical: AppSizes.xl,
+      ),
+      child: Container(
+        color: ContentTheme.getDefaultBackgroundColor(context),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (index == 0 && widget.post.title.isNotEmpty) ...[
+              Text(
+                widget.post.title,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: titleFontSize,
+                  fontWeight: FontWeight.bold,
+                  height: 1.4,
                 ),
-                child: Icon(
-                  Icons.chevron_right,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20,
-                ),
+                textAlign: widget.isUiHidden
+                    ? TextAlign.center
+                    : TextAlign.start,
               ),
+              const SizedBox(height: AppSizes.sm),
+            ],
+            Text(
+              _contentChunks[index],
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
+                fontSize: contentFontSize,
+                fontWeight: FontWeight.w400,
+                height: 1.5,
+              ),
+              textAlign: widget.isUiHidden ? TextAlign.center : TextAlign.start,
             ),
-          ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Widget to center scrollable content vertically
+class ExpandedContentCentered extends StatelessWidget {
+  final Widget child;
+  const ExpandedContentCentered({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Expanded(
+          child: Center(child: SingleChildScrollView(child: child)),
+        ),
       ],
     );
   }
