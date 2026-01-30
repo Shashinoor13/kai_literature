@@ -431,6 +431,46 @@ class _CommentedPostsTabState extends State<_CommentedPostsTab> {
   }
 }
 
+void _showFullScreenImage(BuildContext context, String imageUrl) {
+  Navigator.of(context).push(
+    PageRouteBuilder(
+      opaque: false,
+      barrierColor: Colors.black,
+      pageBuilder: (_, __, ___) {
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: Stack(
+            children: [
+              // Image (tap anywhere to close)
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Center(
+                  child: InteractiveViewer(
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrl,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ),
+
+              //Close button (top-right)
+              Positioned(
+                top: MediaQuery.of(context).padding.top + 12,
+                right: 12,
+                child: IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ),
+  );
+}
+
 /// Compact Profile Header
 class _ProfileHeader extends StatelessWidget {
   final dynamic user;
@@ -453,18 +493,25 @@ class _ProfileHeader extends StatelessWidget {
               Row(
                 children: [
                   // Profile Picture (smaller)
-                  CircleAvatar(
-                    radius: 40,
-                    backgroundColor: Colors.grey[300],
-                    backgroundImage: user.profileImageUrl.isNotEmpty
-                        ? CachedNetworkImageProvider(user.profileImageUrl)
-                        : null,
-                    child: user.profileImageUrl.isEmpty
-                        ? Text(
-                            user.username[0].toUpperCase(),
-                            style: const TextStyle(fontSize: 28),
-                          )
-                        : null,
+                  GestureDetector(
+                    onTap: () {
+                      if (user.profileImageUrl.isNotEmpty) {
+                        _showFullScreenImage(context, user.profileImageUrl);
+                      }
+                    },
+                    child: CircleAvatar(
+                      radius: 40,
+                      backgroundColor: Colors.grey[300],
+                      backgroundImage: user.profileImageUrl.isNotEmpty
+                          ? CachedNetworkImageProvider(user.profileImageUrl)
+                          : null,
+                      child: user.profileImageUrl.isEmpty
+                          ? Text(
+                              user.username[0].toUpperCase(),
+                              style: const TextStyle(fontSize: 28),
+                            )
+                          : null,
+                    ),
                   ),
                   const SizedBox(width: AppSizes.lg),
 

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:heroicons/heroicons.dart';
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/core/storages/gloabl/value.dart';
+import 'package:literature/core/theme/theme_model.dart';
 import 'package:literature/features/feed/bloc/feed_bloc.dart';
 import 'package:literature/features/feed/bloc/feed_event.dart';
 import 'package:literature/features/feed/bloc/feed_state.dart';
+import 'package:literature/features/theme/bloc/theme_bloc.dart';
+import 'package:literature/features/theme/bloc/theme_event.dart';
 
 /// Extension to get display name for FeedType
 extension FeedTypeExtension on FeedType {
@@ -256,9 +260,13 @@ class _FeedFilterChipsState extends State<FeedFilterChips> {
       onTap: () {
         if (_selectedContentFilter != filter) {
           GlobalState.instance.selectedContentFilter = filter;
-
+          context.read<ThemeBloc>().add(
+            ChangeThemeMode(
+              AppThemeMode.custom,
+            ), // using custom mode to apply our colors
+          );
           widget.feedBloc.add(ChangeContentFilter(filter));
-          setState(() {}); // update UI
+          setState(() {});
         }
       },
       child: Container(

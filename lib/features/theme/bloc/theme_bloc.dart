@@ -5,6 +5,7 @@ import 'package:literature/core/theme/app_theme.dart';
 import 'package:literature/core/theme/theme_model.dart';
 import 'package:literature/core/constants/sizes.dart';
 import 'package:literature/core/constants/text_styles.dart';
+import 'package:literature/core/utils/content_theme.dart';
 import 'package:literature/features/feed/bloc/feed_event.dart';
 import 'package:literature/features/theme/bloc/theme_event.dart';
 import 'package:literature/features/theme/bloc/theme_state.dart';
@@ -53,6 +54,7 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
   }
 
   /// Change theme mode
+  ///
   Future<void> _onChangeThemeMode(
     ChangeThemeMode event,
     Emitter<ThemeState> emit,
@@ -61,34 +63,22 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
       final currentState = state;
       if (currentState is! ThemeLoaded) return;
 
-      ThemeConfig newConfig;
+      // Get the current selected tab
+      final filter = GlobalState.instance.selectedContentFilter;
 
-      // Preserve background image path when switching themes
+      // Get background & text color for this tab
+      final backgroundColor = ContentTheme.backgroundForFilter(filter);
+      final textColor = ContentTheme.textForFilter(filter);
+
+      // Preserve background image if any
       final backgroundImagePath = currentState.config.backgroundImagePath;
 
-      switch (event.mode) {
-        case AppThemeMode.light:
-          newConfig = ThemeConfig.defaultLight().copyWith(
-            backgroundImagePath: backgroundImagePath,
-          );
-          break;
-        case AppThemeMode.dark:
-          newConfig = ThemeConfig.defaultDark().copyWith(
-            backgroundImagePath: backgroundImagePath,
-          );
-          break;
-        case AppThemeMode.custom:
-          // Keep existing custom colors or use defaults
-          newConfig = currentState.config.mode == AppThemeMode.custom
-              ? currentState.config.copyWith(mode: AppThemeMode.custom)
-              : ThemeConfig.custom(
-                  primaryColor: Colors.white,
-                  backgroundColor: Colors.black,
-                  textColor: Colors.white,
-                  backgroundImagePath: backgroundImagePath,
-                );
-          break;
-      }
+      final newConfig = currentState.config.copyWith(
+        mode: event.mode,
+        backgroundColor: backgroundColor,
+        textColor: textColor,
+        backgroundImagePath: backgroundImagePath,
+      );
 
       final themeData = _generateThemeData(newConfig);
       await themeRepository.saveThemeConfig(newConfig);
@@ -98,6 +88,52 @@ class ThemeBloc extends Bloc<ThemeEvent, ThemeState> {
       emit(ThemeError(e.toString()));
     }
   }
+
+  // Future<void> _onChangeThemeMode(
+  //   ChangeThemeMode event,
+  //   Emitter<ThemeState> emit,
+  // ) async {
+  //   try {
+  //     final currentState = state;
+  //     if (currentState is! ThemeLoaded) return;
+
+  //     ThemeConfig newConfig;
+
+  //     // Preserve background image path when switching themes
+  //     final backgroundImagePath = currentState.config.backgroundImagePath;
+
+  //     switch (event.mode) {
+  //       case AppThemeMode.light:
+  //         newConfig = ThemeConfig.defaultLight().copyWith(
+  //           backgroundImagePath: backgroundImagePath,
+  //         );
+  //         break;
+  //       case AppThemeMode.dark:
+  //         newConfig = ThemeConfig.defaultDark().copyWith(
+  //           backgroundImagePath: backgroundImagePath,
+  //         );
+  //         break;
+  //       case AppThemeMode.custom:
+  //         // Keep existing custom colors or use defaults
+  //         newConfig = currentState.config.mode == AppThemeMode.custom
+  //             ? currentState.config.copyWith(mode: AppThemeMode.custom)
+  //             : ThemeConfig.custom(
+  //                 primaryColor: Colors.white,
+  //                 backgroundColor: Colors.black,
+  //                 textColor: Colors.white,
+  //                 backgroundImagePath: backgroundImagePath,
+  //               );
+  //         break;
+  //     }
+
+  //     final themeData = _generateThemeData(newConfig);
+  //     await themeRepository.saveThemeConfig(newConfig);
+
+  //     emit(ThemeLoaded(config: newConfig, themeData: themeData));
+  //   } catch (e) {
+  //     emit(ThemeError(e.toString()));
+  //   }
+  // }
 
   /// Update custom theme colors
   Future<void> _onUpdateCustomTheme(

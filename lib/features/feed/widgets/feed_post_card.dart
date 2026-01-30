@@ -336,7 +336,6 @@ class _FeedPostCardState extends State<FeedPostCard>
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ThemeBloc, theme_state.ThemeState>(

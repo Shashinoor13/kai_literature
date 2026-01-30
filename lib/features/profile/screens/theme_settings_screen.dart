@@ -77,7 +77,10 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
             onPressed: () => Navigator.of(dialogContext).pop(),
             child: Text(
               'Cancel',
-              style: TextStyle(inherit: true, color: Theme.of(dialogContext).colorScheme.primary),
+              style: TextStyle(
+                inherit: true,
+                color: Theme.of(dialogContext).colorScheme.primary,
+              ),
             ),
           ),
           ElevatedButton(
@@ -87,7 +90,10 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
             },
             child: Text(
               'Select',
-              style: TextStyle(inherit: true, color: Theme.of(dialogContext).colorScheme.onPrimary),
+              style: TextStyle(
+                inherit: true,
+                color: Theme.of(dialogContext).colorScheme.onPrimary,
+              ),
             ),
           ),
         ],
@@ -121,7 +127,10 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
                     },
                     child: Text(
                       'Retry',
-                      style: TextStyle(inherit: true, color: Theme.of(context).colorScheme.onPrimary),
+                      style: TextStyle(
+                        inherit: true,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
                     ),
                   ),
                 ],
@@ -142,10 +151,7 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
               // Theme Mode Section
               const Text(
                 'Theme Mode',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: AppSizes.sm),
               _buildThemeModeSelector(config.mode),
@@ -155,10 +161,7 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
               if (isCustomMode) ...[
                 const Text(
                   'Custom Colors',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: AppSizes.sm),
                 _buildColorOption(
@@ -166,12 +169,12 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
                   config.primaryColor ?? Colors.white,
                   (color) {
                     context.read<ThemeBloc>().add(
-                          UpdateCustomTheme(
-                            primaryColor: color,
-                            backgroundColor: config.backgroundColor,
-                            textColor: config.textColor,
-                          ),
-                        );
+                      UpdateCustomTheme(
+                        primaryColor: color,
+                        backgroundColor: config.backgroundColor,
+                        textColor: config.textColor,
+                      ),
+                    );
                   },
                 ),
                 const SizedBox(height: AppSizes.sm),
@@ -180,12 +183,12 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
                   config.backgroundColor ?? Colors.black,
                   (color) {
                     context.read<ThemeBloc>().add(
-                          UpdateCustomTheme(
-                            primaryColor: config.primaryColor,
-                            backgroundColor: color,
-                            textColor: config.textColor,
-                          ),
-                        );
+                      UpdateCustomTheme(
+                        primaryColor: config.primaryColor,
+                        backgroundColor: color,
+                        textColor: config.textColor,
+                      ),
+                    );
                   },
                 ),
                 const SizedBox(height: AppSizes.sm),
@@ -194,12 +197,12 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
                   config.textColor ?? Colors.white,
                   (color) {
                     context.read<ThemeBloc>().add(
-                          UpdateCustomTheme(
-                            primaryColor: config.primaryColor,
-                            backgroundColor: config.backgroundColor,
-                            textColor: color,
-                          ),
-                        );
+                      UpdateCustomTheme(
+                        primaryColor: config.primaryColor,
+                        backgroundColor: config.backgroundColor,
+                        textColor: color,
+                      ),
+                    );
                   },
                 ),
                 const SizedBox(height: AppSizes.xl),
@@ -208,10 +211,7 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
               // Feed Background Section
               const Text(
                 'Feed Background',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: AppSizes.sm),
               _buildBackgroundImageSection(config.backgroundImagePath),
@@ -224,7 +224,10 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
                 },
                 child: Text(
                   'Reset to Default',
-                  style: TextStyle(inherit: true, color: Theme.of(context).colorScheme.primary),
+                  style: TextStyle(
+                    inherit: false,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
                 ),
               ),
             ],
@@ -320,7 +323,8 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
             const HeroIcon(HeroIcons.chevronRight, size: 20),
           ],
         ),
-        onTap: () => _showColorPicker(context, label, currentColor, onColorChanged),
+        onTap: () =>
+            _showColorPicker(context, label, currentColor, onColorChanged),
       ),
     );
   }
@@ -351,7 +355,10 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
                       icon: const HeroIcon(HeroIcons.photo, size: 20),
                       label: Text(
                         'Change Image',
-                        style: TextStyle(inherit: true, color: Theme.of(context).colorScheme.primary),
+                        style: TextStyle(
+                          inherit: true,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                     ),
                   ),
@@ -362,7 +369,10 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
                       icon: const HeroIcon(HeroIcons.trash, size: 20),
                       label: Text(
                         'Remove',
-                        style: TextStyle(inherit: true, color: Theme.of(context).colorScheme.primary),
+                        style: TextStyle(
+                          inherit: true,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
                     ),
                   ),
@@ -379,7 +389,10 @@ class _ThemeSettingsScreenState extends State<ThemeSettingsScreen> {
                 icon: const HeroIcon(HeroIcons.photo, size: 20),
                 label: Text(
                   'Select Background Image',
-                  style: TextStyle(inherit: true, color: Theme.of(context).colorScheme.onPrimary),
+                  style: TextStyle(
+                    inherit: true,
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
                 ),
               ),
             ],
